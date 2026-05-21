@@ -371,7 +371,7 @@ app.post('/api/leads', async (req, res) => {
       return res.json({ ok: true, demo: true });
     }
 
-    const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode });
+    const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode, photos: body.photos || {} });
 
     // Route the lead (fire and forget)
     if (widget) routeLead(lead, widget).catch(err => console.warn('Routing error:', err.message));

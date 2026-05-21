@@ -477,6 +477,7 @@ async function saveLead(d) {
         analysis: d.analysis || '',
         modalities: (d.recommendedModalities || []).map(m => m.name),
         package: d.estimatedInvestment?.package || '',
+        photos: Object.fromEntries(Object.entries(S.photos).filter(([,v]) => v)),
         hasPhotos: Object.values(S.photos).some(v => v),
         skinQuality: S.pa?.skinQualityScore || null,
         widgetCode: WIDGET_CODE || null,

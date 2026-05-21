@@ -733,6 +733,15 @@ function renderLeadRow(l) {
         ${l.package?`<div class="dl">Package</div><div class="dv" style="font-weight:600;color:var(--ac-d)">${esc(l.package)}</div>`:''}
         ${l.analysis?`<div class="dl">AI Summary</div><div class="dv">${esc(l.analysis)}</div>`:''}
         ${l.skinQuality?`<div class="dl">Skin Quality</div><div class="dv">${esc(l.skinQuality)}</div>`:''}
+        ${Object.keys(l.photos||{}).length?`
+        <div class="dl" style="margin-top:6px">Photos</div>
+        <div class="dv" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          ${Object.entries(l.photos||{}).map(([slot,src])=>`
+            <div style="text-align:center">
+              <img src="${src}" alt="${esc(slot)}" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:0.5px solid var(--border2);display:block">
+              <div style="font-size:10px;color:var(--t3);margin-top:3px;text-transform:capitalize">${esc(slot)}</div>
+            </div>`).join('')}
+        </div>`:''}
       </div>
     </div>
     <div class="lead-date">${dateStr}</div>
