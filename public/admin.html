@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lead Dashboard · Lumière Aesthetics</title>
+<title>Admin · Hey, Maeve!</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -106,8 +106,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
   <div class="dash-wrap">
     <div class="dash-hdr">
       <div class="dash-title-group">
-        <div class="dash-clinic">Lumière Aesthetics</div>
-        <div class="dash-title">Lead Dashboard</div>
+        <div class="dash-clinic">Hey, Maeve!</div>
+        <div class="dash-title">Admin Dashboard</div>
       </div>
       <div class="dash-actions">
         <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
@@ -151,7 +151,7 @@ async function login() {
   const pw = $('pw').value;
   $('login-err').textContent = '';
   try {
-    const res = await fetch('/api/leads?password=' + encodeURIComponent(pw));
+    const res = await fetch('/api/admin/leads?password=' + encodeURIComponent(pw));
     if (!res.ok) throw new Error('bad');
     ALL_LEADS = await res.json();
     SESSION_PW = pw;

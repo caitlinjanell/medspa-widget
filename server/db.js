@@ -259,6 +259,11 @@ module.exports = {
     return rows[0] || null;
   },
 
+  async getAllLeads() {
+    const { rows } = await pool.query('SELECT l.*, p.clinic_name FROM leads l JOIN providers p ON l.provider_id = p.id ORDER BY l.captured_at DESC');
+    return rows.map(parseLead);
+  },
+
   async getLeadsByWidget(widgetCode) {
     const { rows } = await pool.query('SELECT * FROM leads WHERE widget_code = $1 ORDER BY captured_at DESC', [widgetCode]);
     return rows.map(parseLead);

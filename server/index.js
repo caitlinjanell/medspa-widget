@@ -470,12 +470,10 @@ app.delete('/api/admin/testimonials/:id', async (req, res) => {
 // ══════════════════════════════════════
 //  Legacy super-admin (kept for compatibility)
 // ══════════════════════════════════════
-app.get('/api/admin/leads', (req, res) => {
+app.get('/api/admin/leads', async (req, res) => {
   const pw = process.env.ADMIN_PASSWORD || 'admin123';
   if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
-  // return all leads across all providers
-  const allLeads = db.getLeadsByProvider && [];
-  res.json([]);
+  res.json(await db.getAllLeads());
 });
 
 const PORT = process.env.PORT || 3000;
