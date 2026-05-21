@@ -11,7 +11,17 @@
       "Bash(curl -s http://localhost:3000/admin)",
       "Bash(curl -s -X POST http://localhost:3000/api/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"systemPrompt\":\"You are a helpful assistant. Reply with exactly: OK\"}')",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['content'][0]['text']\\)\")",
-      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(npm install *)",
+      "Bash(sudo chown -R 501:20 \"/Users/caitlinwhite/.npm\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/signup -H 'Content-Type: application/json' -d '{\"email\":\"demo@test.com\",\"password\":\"password123\",\"clinicName\":\"Test Spa\"}')",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"demo@test.com\",\"password\":\"password123\"}')",
+      "Read(//tmp/**)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' http://localhost:3000/api/provider/widgets)",
       "Bash(git add *)",
       "Bash(git commit *)"
     ]

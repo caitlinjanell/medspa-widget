@@ -128,31 +128,63 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 
 <script>
 // ─────────────────────────────────────────────
-//  CLINIC CONFIGURATION — edit this object
+//  CLINIC CONFIGURATION — defaults (overridden
+//  by server config when ?code= is in the URL)
 // ─────────────────────────────────────────────
-const CLINIC = {
-  name:       'Lumière Aesthetics',
-  logoUrl:    '',
-  accent:     '#b49dd4',
-  accentLight:'#EEEDFE',
-  accentDark: '#3C3489',
-  accentMid:  '#7c5ca8',
-  bookingUrl: 'https://example.com/book',
-  poweredBy:  'Aesthetic Intelligence™',
-  apiEndpoint:'/api/analyze',
+const DEFAULTS = {
+  clinicName:  'Lumière Aesthetics',
+  logoUrl:     '',
+  accent:      '#b49dd4',
+  accentLight: '#EEEDFE',
+  accentDark:  '#3C3489',
+  accentMid:   '#7c5ca8',
+  bookingUrl:  'https://example.com/book',
+  poweredBy:   'Aesthetic Intelligence™',
+  areas:       ['Forehead',"Crow's feet",'Lips','Cheeks','Jawline','Skin texture'],
+  concerns:    ['Fine lines / wrinkles','Volume loss','Asymmetry','Dullness / sun damage','Sagging skin'],
+  history:     ['New to aesthetics','Had toxins before','Had dermal fillers','Had lasers / peels'],
+  budget:      ['Under $500','$500 – $1,200','$1,200 – $2,500','Premium / full restoration'],
 };
 
-const R = document.documentElement.style;
-R.setProperty('--ac',     CLINIC.accent);
-R.setProperty('--ac-l',   CLINIC.accentLight);
-R.setProperty('--ac-d',   CLINIC.accentDark);
-R.setProperty('--ac-m',   CLINIC.accentMid);
+let CLINIC = { ...DEFAULTS, name: DEFAULTS.clinicName, apiEndpoint: '/api/analyze' };
+let WIDGET_CODE = new URLSearchParams(location.search).get('code');
 
-const hdr = document.getElementById('hdr');
-hdr.innerHTML = CLINIC.logoUrl
-  ? `<img src="${CLINIC.logoUrl}" class="hdr-logo" alt="${CLINIC.name}"><span class="hdr-tag">Pre-consultation</span>`
-  : `<span class="hdr-name">${CLINIC.name}</span><span class="hdr-tag">Pre-consultation</span>`;
-document.getElementById('ftr').textContent = CLINIC.poweredBy + ' · Confidential & Secure';
+function applyConfig(cfg) {
+  if (!cfg) return;
+  CLINIC = { ...CLINIC, ...cfg, name: cfg.clinicName || CLINIC.name };
+  if (cfg.areas)    window._AREAS    = cfg.areas;
+  if (cfg.concerns) window._CONCERNS = cfg.concerns;
+  if (cfg.history)  window._HISTORY  = cfg.history;
+  if (cfg.budget)   window._BUDGET   = cfg.budget;
+  const R = document.documentElement.style;
+  if (cfg.accent)       R.setProperty('--ac',   cfg.accent);
+  if (cfg.accentLight)  R.setProperty('--ac-l', cfg.accentLight);
+  if (cfg.accentDark)   R.setProperty('--ac-d', cfg.accentDark);
+  if (cfg.accentMid)    R.setProperty('--ac-m', cfg.accentMid);
+  const hdr = document.getElementById('hdr');
+  if (hdr) hdr.innerHTML = cfg.logoUrl
+    ? `<img src="${cfg.logoUrl}" class="hdr-logo" alt="${cfg.clinicName}"><span class="hdr-tag">Pre-consultation</span>`
+    : `<span class="hdr-name">${cfg.clinicName||CLINIC.name}</span><span class="hdr-tag">Pre-consultation</span>`;
+  const ftr = document.getElementById('ftr');
+  if (ftr) ftr.textContent = (cfg.poweredBy||CLINIC.poweredBy) + ' · Confidential & Secure';
+}
+
+async function loadConfig() {
+  if (WIDGET_CODE) {
+    try {
+      const res = await fetch(`/api/widget-config/${WIDGET_CODE}`);
+      if (res.ok) applyConfig(await res.json());
+    } catch {}
+  } else {
+    applyConfig(DEFAULTS);
+  }
+}
+
+// Use overridable arrays (populated from config)
+function getAreas()    { return window._AREAS    || DEFAULTS.areas; }
+function getConcerns() { return window._CONCERNS || DEFAULTS.concerns; }
+function getHistory()  { return window._HISTORY  || DEFAULTS.history; }
+function getBudget()   { return window._BUDGET   || DEFAULTS.budget; }
 
 // ─────────────────────────────────────────────
 //  App state
@@ -166,10 +198,7 @@ const S = {
   chatMsgs:[], chatDisplay:[], chatSys:'',
 };
 
-const AREAS    = ['Forehead',"Crow's feet",'Lips','Cheeks','Jawline','Skin texture'];
-const CONCERNS = ['Fine lines / wrinkles','Volume loss','Asymmetry','Dullness / sun damage','Sagging skin'];
-const HISTORY  = ['New to aesthetics','Had toxins before','Had dermal fillers','Had lasers / peels'];
-const BUDGET   = ['Under $500','$500 – $1,200','$1,200 – $2,500','Premium / full restoration'];
+// Arrays are loaded from config; use getAreas() etc. in step templates
 const SLOTS    = [
   {k:'front', l:'Front view',  h:'Straight ahead'},
   {k:'left',  l:'Left side',   h:'45° left'},
@@ -264,7 +293,7 @@ const STEPS = {
     <div class="ttl">Which areas are you focusing on?</div>
     <div class="sub">Select all you'd like to address. No wrong answers.</div>
     <div class="chips">
-      ${AREAS.map(a => `<button class="chip${S.areas.includes(a)?' on':''}" onclick="tog(this,'${a.replace(/'/g,"\\'")}','areas')">${a}</button>`).join('')}
+      ${getAreas().map(a => `<button class="chip${S.areas.includes(a)?' on':''}" onclick="tog(this,'${a.replace(/'/g,"\\'")}','areas')">${a}</button>`).join('')}
     </div>
     <button class="btn pri" id="nb" onclick="go(2)" ${S.areas.length?'':'disabled'}>Continue</button>`,
 
@@ -273,7 +302,7 @@ const STEPS = {
     <div class="ttl">What are your primary concerns?</div>
     <div class="sub">Select everything that resonates with you.</div>
     <div class="chips">
-      ${CONCERNS.map(c => `<button class="chip${S.concerns.includes(c)?' on':''}" onclick="tog(this,'${c}','concerns')">${c}</button>`).join('')}
+      ${getConcerns().map(c => `<button class="chip${S.concerns.includes(c)?' on':''}" onclick="tog(this,'${c}','concerns')">${c}</button>`).join('')}
     </div>
     <button class="btn gho" onclick="go(1)">← Back</button>
     <button class="btn pri" id="nb" onclick="go(3)" ${S.concerns.length?'':'disabled'}>Continue</button>`,
@@ -284,11 +313,11 @@ const STEPS = {
     <div class="sub">Help us personalize your results.</div>
     <div class="glbl">Treatment history</div>
     <div class="chips">
-      ${HISTORY.map(h => `<button class="chip${S.history===h?' on':''}" data-g="history" onclick="solo(this,'${h}','history')">${h}</button>`).join('')}
+      ${getHistory().map(h => `<button class="chip${S.history===h?' on':''}" data-g="history" onclick="solo(this,'${h}','history')">${h}</button>`).join('')}
     </div>
     <div class="glbl" style="margin-top:4px">Investment comfort zone</div>
     <div class="chips">
-      ${BUDGET.map(b => `<button class="chip${S.budget===b?' on':''}" data-g="budget" onclick="solo(this,'${b}','budget')">${b}</button>`).join('')}
+      ${getBudget().map(b => `<button class="chip${S.budget===b?' on':''}" data-g="budget" onclick="solo(this,'${b}','budget')">${b}</button>`).join('')}
     </div>
     <button class="btn gho" onclick="go(2)">← Back</button>
     <button class="btn pri" id="nb" onclick="go(4)" ${S.history&&S.budget?'':'disabled'}>Continue</button>`,
@@ -441,6 +470,7 @@ async function saveLead(d) {
         package: d.estimatedInvestment?.package || '',
         hasPhotos: Object.values(S.photos).some(v => v),
         skinQuality: S.pa?.skinQualityScore || null,
+        widgetCode: WIDGET_CODE || null,
       }),
     });
   } catch (err) {
@@ -652,8 +682,8 @@ function showError(msg) {
     <button class="btn gho" onclick="go(5)">← Try again</button>`;
 }
 
-// Boot
-go(1);
+// Boot — load config then start
+loadConfig().then(() => go(1));
 </script>
 </body>
 </html>

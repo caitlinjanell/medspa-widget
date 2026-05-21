@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign up · AestheticAI</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.16);--t1:#1a1a1a;--t2:#555;--t3:#999}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#f0eef8,#faf9ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
+.card{width:100%;max-width:420px;background:var(--bg);border-radius:20px;border:0.5px solid var(--border);box-shadow:0 8px 40px rgba(60,52,137,.1);overflow:hidden}
+.card-hdr{padding:2rem 2rem 1.5rem;border-bottom:0.5px solid var(--border)}
+.logo{font-size:16px;font-weight:800;color:var(--ac-d);letter-spacing:-.02em;margin-bottom:.75rem}
+.logo span{color:var(--ac)}
+h1{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+.card-sub{font-size:14px;color:var(--t2);margin-top:.3rem}
+.card-body{padding:1.75rem 2rem 2rem}
+.flbl{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:5px}
+.finp{width:100%;padding:11px 13px;border-radius:9px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--t1);font-size:14px;outline:none;transition:all .14s;font-family:inherit;margin-bottom:13px}
+.finp:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-l);background:var(--bg)}
+.btn{width:100%;padding:13px;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit;background:var(--ac-d);color:#fff;margin-top:4px}
+.btn:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.err{font-size:13px;color:#c0392b;background:#fff5f5;border:0.5px solid #fbc9c9;border-radius:8px;padding:10px 13px;margin-bottom:12px;display:none}
+.login-link{text-align:center;margin-top:1.25rem;font-size:13px;color:var(--t2)}
+.login-link a{color:var(--ac-m);font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-hdr">
+    <div class="logo">Aesthetic<span>AI</span></div>
+    <h1>Set up your practice</h1>
+    <p class="card-sub">Create your account and get your widget in minutes.</p>
+  </div>
+  <div class="card-body">
+    <div class="err" id="err"></div>
+    <label class="flbl">Clinic name</label>
+    <input class="finp" id="clinic" placeholder="Lumière Aesthetics" autocomplete="organization">
+    <label class="flbl">Your email</label>
+    <input class="finp" id="email" type="email" placeholder="you@yourclinic.com" autocomplete="email">
+    <label class="flbl">Password</label>
+    <input class="finp" id="pw" type="password" placeholder="At least 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')signup()">
+    <button class="btn" id="btn" onclick="signup()">Create account →</button>
+    <div class="login-link">Already have an account? <a href="/login">Sign in</a></div>
+  </div>
+</div>
+<script>
+async function signup() {
+  const clinic = document.getElementById('clinic').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('err');
+  const btn = document.getElementById('btn');
+  err.style.display = 'none';
+  if (!clinic || !email || !pw) { err.textContent = 'Please fill in all fields.'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clinicName: clinic, email, password: pw }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Signup failed');
+    localStorage.setItem('aiToken', data.token);
+    localStorage.setItem('aiProvider', JSON.stringify(data.provider));
+    window.location.href = '/dashboard';
+  } catch (e) {
+    err.textContent = e.message; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Create account →';
+  }
+}
+</script>
+</body>
+</html>
