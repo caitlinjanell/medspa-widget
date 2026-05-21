@@ -165,18 +165,22 @@ async function routeLead(lead, widget) {
   }
 
   // Always-on SMS alert to provider (independent of routing type)
+  console.log('SMS check — notificationPhone:', config.notificationPhone, '| TWILIO_SID set:', !!process.env.TWILIO_SID, '| TWILIO_TOKEN set:', !!process.env.TWILIO_TOKEN, '| TWILIO_FROM:', process.env.TWILIO_FROM);
   if (config.notificationPhone && process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
     try {
       const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
       const areas = (lead.areas || []).slice(0, 2).join(', ');
-      await twilio.messages.create({
+      const msg = await twilio.messages.create({
         to: config.notificationPhone,
         from: process.env.TWILIO_FROM,
         body: `New lead @ ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget}${areas ? ' · ' + areas : ''} · View in your Hey, Maeve! dashboard.`,
       });
+      console.log('SMS sent successfully, SID:', msg.sid);
     } catch (err) {
-      console.warn('SMS notification error:', err.message);
+      console.warn('SMS notification error:', err.message, err.code, err.status);
     }
+  } else {
+    console.warn('SMS skipped — missing:', !config.notificationPhone ? 'notificationPhone' : !process.env.TWILIO_SID ? 'TWILIO_SID' : 'TWILIO_TOKEN');
   }
 
   if (type === 'chatbot' && lead.email) {
