@@ -23,7 +23,10 @@
       "Read(//tmp/**)",
       "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' http://localhost:3000/api/provider/widgets)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(curl -s http://localhost:3000/dashboard)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' http://localhost:3000/api/auth/me)"
     ]
   }
 }

@@ -10,13 +10,24 @@ const db = new Database(path.join(DATA_DIR, 'medspa.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+// Migrate existing tables to add new columns safely
+const migrate = (sql) => { try { db.exec(sql); } catch {} };
+migrate('ALTER TABLE providers ADD COLUMN stripe_customer_id TEXT');
+migrate('ALTER TABLE providers ADD COLUMN stripe_subscription_id TEXT');
+migrate('ALTER TABLE providers ADD COLUMN subscription_status TEXT DEFAULT "trialing"');
+migrate('ALTER TABLE providers ADD COLUMN trial_ends_at TEXT');
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS providers (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     clinic_name TEXT NOT NULL,
-    plan TEXT DEFAULT 'starter',
+    plan TEXT DEFAULT 'trial',
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    subscription_status TEXT DEFAULT 'trialing',
+    trial_ends_at TEXT,
     created_at TEXT NOT NULL
   );
 
@@ -86,8 +97,9 @@ module.exports = {
   createProvider(email, passwordHash, clinicName) {
     const id = newId();
     const now = new Date().toISOString();
-    db.prepare('INSERT INTO providers (id, email, password_hash, clinic_name, created_at) VALUES (?,?,?,?,?)')
-      .run(id, email.toLowerCase().trim(), passwordHash, clinicName, now);
+    const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare('INSERT INTO providers (id, email, password_hash, clinic_name, plan, subscription_status, trial_ends_at, created_at) VALUES (?,?,?,?,?,?,?,?)')
+      .run(id, email.toLowerCase().trim(), passwordHash, clinicName, 'trial', 'trialing', trialEnd, now);
     // auto-create first widget
     const wid = newId();
     const code = newId();
@@ -101,7 +113,22 @@ module.exports = {
   },
 
   getProviderById(id) {
-    return db.prepare('SELECT id, email, clinic_name, plan, created_at FROM providers WHERE id = ?').get(id);
+    return db.prepare('SELECT id, email, clinic_name, plan, stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at, created_at FROM providers WHERE id = ?').get(id);
+  },
+
+  getProviderByStripeCustomer(customerId) {
+    return db.prepare('SELECT * FROM providers WHERE stripe_customer_id = ?').get(customerId);
+  },
+
+  updateProviderBilling(id, { stripeCustomerId, stripeSubscriptionId, subscriptionStatus, plan }) {
+    const fields = []; const vals = [];
+    if (stripeCustomerId      !== undefined) { fields.push('stripe_customer_id = ?');      vals.push(stripeCustomerId); }
+    if (stripeSubscriptionId  !== undefined) { fields.push('stripe_subscription_id = ?');  vals.push(stripeSubscriptionId); }
+    if (subscriptionStatus    !== undefined) { fields.push('subscription_status = ?');      vals.push(subscriptionStatus); }
+    if (plan                  !== undefined) { fields.push('plan = ?');                     vals.push(plan); }
+    if (!fields.length) return;
+    vals.push(id);
+    db.prepare(`UPDATE providers SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
   },
 
   // ── Widgets ──

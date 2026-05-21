@@ -6,13 +6,82 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
+const Stripe = require('stripe');
 const db = require('./db');
+
+const stripe = process.env.STRIPE_SECRET_KEY ? Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 
 app.use(cors());
+
+// ── Stripe webhook (raw body MUST come before express.json) ──
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    return res.status(400).send(`Webhook error: ${err.message}`);
+  }
+
+  const PLAN_PRICES = {
+    [process.env.STRIPE_PRICE_STARTER]: 'starter',
+    [process.env.STRIPE_PRICE_PRO]:     'pro',
+  };
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        if (session.mode !== 'subscription') break;
+        const sub = await stripe.subscriptions.retrieve(session.subscription);
+        const priceId = sub.items.data[0]?.price?.id;
+        const plan = PLAN_PRICES[priceId] || 'starter';
+        db.updateProviderBilling(session.metadata.providerId, {
+          stripeCustomerId: session.customer,
+          stripeSubscriptionId: session.subscription,
+          subscriptionStatus: 'active',
+          plan,
+        });
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
+        const provider = db.getProviderByStripeCustomer(sub.customer);
+        if (!provider) break;
+        const priceId = sub.items.data[0]?.price?.id;
+        const plan = PLAN_PRICES[priceId] || provider.plan;
+        db.updateProviderBilling(provider.id, {
+          subscriptionStatus: sub.status,
+          stripeSubscriptionId: sub.id,
+          plan,
+        });
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        const provider = db.getProviderByStripeCustomer(sub.customer);
+        if (provider) db.updateProviderBilling(provider.id, { subscriptionStatus: 'canceled', plan: 'free' });
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        const provider = db.getProviderByStripeCustomer(invoice.customer);
+        if (provider) db.updateProviderBilling(provider.id, { subscriptionStatus: 'past_due' });
+        break;
+      }
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook handler error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.use(express.json({ limit: '20mb' }));
 
 // ── Auth middleware ──
@@ -158,7 +227,66 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', requireAuth, (req, res) => {
   const provider = db.getProviderById(req.provider.id);
   if (!provider) return res.status(404).json({ error: 'Not found' });
-  res.json({ id: provider.id, email: provider.email, clinicName: provider.clinic_name, plan: provider.plan });
+  // Compute trial days remaining
+  let trialDaysLeft = 0;
+  if (provider.subscription_status === 'trialing' && provider.trial_ends_at) {
+    trialDaysLeft = Math.max(0, Math.ceil((new Date(provider.trial_ends_at) - Date.now()) / 86400000));
+  }
+  res.json({
+    id: provider.id,
+    email: provider.email,
+    clinicName: provider.clinic_name,
+    plan: provider.plan,
+    subscriptionStatus: provider.subscription_status,
+    trialDaysLeft,
+    hasStripe: !!provider.stripe_customer_id,
+  });
+});
+
+// ══════════════════════════════════════
+//  Stripe — checkout & billing portal
+// ══════════════════════════════════════
+app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
+  if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
+  const { plan } = req.body; // 'starter' or 'pro'
+  const priceId = plan === 'pro' ? process.env.STRIPE_PRICE_PRO : process.env.STRIPE_PRICE_STARTER;
+  if (!priceId) return res.status(400).json({ error: `STRIPE_PRICE_${plan.toUpperCase()} not set in environment` });
+
+  const provider = db.getProviderById(req.provider.id);
+  const origin = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
+
+  // Reuse existing Stripe customer if available
+  let customerId = provider.stripe_customer_id;
+  if (!customerId) {
+    const customer = await stripe.customers.create({ email: provider.email, name: provider.clinic_name });
+    customerId = customer.id;
+    db.updateProviderBilling(provider.id, { stripeCustomerId: customerId });
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${origin}/dashboard?upgraded=1`,
+    cancel_url:  `${origin}/dashboard?canceled=1`,
+    metadata: { providerId: provider.id },
+    subscription_data: { trial_period_days: 0 },
+    allow_promotion_codes: true,
+  });
+
+  res.json({ url: session.url });
+});
+
+app.post('/api/stripe/portal', requireAuth, async (req, res) => {
+  if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
+  const provider = db.getProviderById(req.provider.id);
+  if (!provider.stripe_customer_id) return res.status(400).json({ error: 'No billing account found' });
+  const origin = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
+  const session = await stripe.billingPortal.sessions.create({
+    customer: provider.stripe_customer_id,
+    return_url: `${origin}/dashboard`,
+  });
+  res.json({ url: session.url });
 });
 
 // ══════════════════════════════════════

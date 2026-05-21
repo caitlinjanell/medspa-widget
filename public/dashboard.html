@@ -166,6 +166,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <button class="sb-item" onclick="showTab('embed')" id="tab-embed">
       <span class="ico">🔗</span> Embed Code
     </button>
+    <button class="sb-item" onclick="showTab('billing')" id="tab-billing">
+      <span class="ico">💳</span> Billing
+    </button>
     <div class="sb-bottom">
       <div class="sb-user">
         <strong id="sb-clinic">—</strong>
@@ -243,13 +246,39 @@ function showTab(name) {
   const tabEl = document.getElementById('tab-' + name);
   if (tabEl) tabEl.classList.add('active');
   const m = document.getElementById('main-content');
-  const renders = { overview: renderOverview, widget: renderWidget, routing: renderRouting, leads: renderLeads, embed: renderEmbed };
+  const renders = { overview: renderOverview, widget: renderWidget, routing: renderRouting, leads: renderLeads, embed: renderEmbed, billing: renderBilling };
   if (renders[name]) renders[name](m);
 }
 
 // ══════════════════════════════════════
 //  OVERVIEW
 // ══════════════════════════════════════
+function trialBanner() {
+  if (provider.subscriptionStatus === 'active') return '';
+  if (provider.subscriptionStatus === 'trialing' && provider.trialDaysLeft > 0) {
+    return `<div style="background:linear-gradient(90deg,var(--ac-d),var(--ac-m));color:#fff;border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;font-weight:700">⏳ Free trial — ${provider.trialDaysLeft} day${provider.trialDaysLeft===1?'':'s'} remaining</div>
+        <div style="font-size:12px;opacity:.8;margin-top:2px">Subscribe before your trial ends to keep your widget live.</div>
+      </div>
+      <button onclick="showTab('billing')" style="padding:8px 18px;background:#fff;color:var(--ac-d);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">Choose a plan →</button>
+    </div>`;
+  }
+  if (provider.subscriptionStatus === 'past_due') {
+    return `<div style="background:#fff5f5;border:1px solid #fbc9c9;border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div style="font-size:13px;color:#c0392b;font-weight:600">⚠️ Payment failed — please update your billing information</div>
+      <button onclick="openPortal()" style="padding:8px 18px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Update payment →</button>
+    </div>`;
+  }
+  if (provider.subscriptionStatus === 'canceled' || (provider.subscriptionStatus === 'trialing' && provider.trialDaysLeft <= 0)) {
+    return `<div style="background:#fff5f5;border:1px solid #fbc9c9;border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div style="font-size:13px;color:#c0392b;font-weight:600">🔒 Your trial has ended — subscribe to reactivate your widget</div>
+      <button onclick="showTab('billing')" style="padding:8px 18px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Subscribe now →</button>
+    </div>`;
+  }
+  return '';
+}
+
 function renderOverview(m) {
   const today = new Date().toDateString();
   const todayLeads = leads.filter(l => new Date(l.capturedAt).toDateString() === today).length;
@@ -261,6 +290,7 @@ function renderOverview(m) {
   const widgetUrl = w ? `${location.origin}/?code=${w.code}` : '';
 
   m.innerHTML = `
+  ${trialBanner()}
   <div class="page-hdr">
     <div class="page-title">Welcome back, ${esc(provider.clinicName)}</div>
     <div class="page-sub">Here's what's happening with your widget today.</div>
@@ -688,6 +718,102 @@ function copyText(text) {
     document.execCommand('copy'); document.body.removeChild(el);
     toast('Copied ✓');
   });
+}
+
+// ══════════════════════════════════════
+//  BILLING
+// ══════════════════════════════════════
+function planLabel() {
+  if (provider.subscriptionStatus === 'active') {
+    return `<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700">● Active</span>`;
+  }
+  if (provider.subscriptionStatus === 'trialing') {
+    return `<span style="background:var(--ac-l);color:var(--ac-d);padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700">◐ Trial — ${provider.trialDaysLeft} days left</span>`;
+  }
+  if (provider.subscriptionStatus === 'past_due') {
+    return `<span style="background:#fff5f5;color:#c0392b;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700">⚠ Payment failed</span>`;
+  }
+  return `<span style="background:var(--bg2);color:var(--t3);padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700">Inactive</span>`;
+}
+
+function renderBilling(m) {
+  const isActive = provider.subscriptionStatus === 'active';
+  const isPro = provider.plan === 'pro';
+
+  m.innerHTML = `
+  <div class="page-hdr">
+    <div class="page-title">Billing</div>
+    <div class="page-sub">Manage your plan and payment details.</div>
+  </div>
+
+  <!-- Current plan status -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:.35rem">Current plan</div>
+        <div style="font-size:20px;font-weight:800;color:var(--t1);letter-spacing:-.01em;margin-bottom:.35rem">
+          ${isActive ? (isPro ? 'Pro' : 'Starter') : 'Free Trial'}
+        </div>
+        ${planLabel()}
+      </div>
+      ${isActive ? `<button class="btn-sec" onclick="openPortal()">Manage billing →</button>` : ''}
+    </div>
+  </div>
+
+  <!-- Plan comparison -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+
+    <!-- Starter -->
+    <div class="card" style="position:relative;${!isPro&&isActive?'border-color:var(--ac-d);border-width:1.5px':''}">
+      ${!isPro&&isActive?'<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--ac-d);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px">Current plan</div>':''}
+      <div style="font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:.4rem">Starter</div>
+      <div style="font-size:32px;font-weight:800;color:var(--t1);letter-spacing:-.02em;line-height:1">$97<span style="font-size:14px;font-weight:500;color:var(--t3)">/mo</span></div>
+      <ul style="list-style:none;margin:1rem 0;display:flex;flex-direction:column;gap:.5rem">
+        ${['1 widget location','200 consultations / mo','Lead capture dashboard','AI treatment recommendations','Photo analysis','Custom branding'].map(f=>`<li style="font-size:13px;color:var(--t2);display:flex;gap:.5rem"><span style="color:var(--ac-m);font-weight:700">✓</span>${f}</li>`).join('')}
+      </ul>
+      ${!isActive||isPro ? `<button class="btn-pri" style="width:100%" onclick="startCheckout('starter')">${isActive&&isPro?'Downgrade to Starter':'Subscribe — $97/mo'}</button>` : ''}
+    </div>
+
+    <!-- Pro -->
+    <div class="card" style="position:relative;background:var(--ac-d);${isPro&&isActive?'border-color:var(--ac-d)':''}">
+      ${isPro&&isActive?'<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--ac);color:var(--ac-d);font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px">Current plan</div>':'<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--ac);color:var(--ac-d);font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px">Most popular</div>'}
+      <div style="font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:.4rem">Pro</div>
+      <div style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1">$197<span style="font-size:14px;font-weight:500;color:rgba(255,255,255,.55)">/mo</span></div>
+      <ul style="list-style:none;margin:1rem 0;display:flex;flex-direction:column;gap:.5rem">
+        ${['Up to 5 widget locations','Unlimited consultations','Everything in Starter','AI virtual concierge chat','CSV lead export','Priority support'].map(f=>`<li style="font-size:13px;color:rgba(255,255,255,.85);display:flex;gap:.5rem"><span style="color:var(--ac);font-weight:700">✓</span>${f}</li>`).join('')}
+      </ul>
+      ${!isActive||!isPro ? `<button style="width:100%;padding:11px;background:#fff;color:var(--ac-d);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .16s" onclick="startCheckout('pro')" onmouseover="this.style.background='var(--ac-l)'" onmouseout="this.style.background='#fff'">${isActive&&!isPro?'Upgrade to Pro':'Subscribe — $197/mo'}</button>` : ''}
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:var(--t3);text-align:center">No contracts. Cancel anytime from the billing portal.</div>`;
+}
+
+async function startCheckout(plan) {
+  try {
+    const res = await api('POST', '/api/stripe/checkout', { plan });
+    if (res?.url) window.location.href = res.url;
+    else toast(res?.error || 'Could not start checkout');
+  } catch {
+    toast('Could not connect to billing');
+  }
+}
+
+async function openPortal() {
+  try {
+    const res = await api('POST', '/api/stripe/portal');
+    if (res?.url) window.location.href = res.url;
+    else toast(res?.error || 'Could not open billing portal');
+  } catch {
+    toast('Could not connect to billing');
+  }
+}
+
+// Handle post-payment redirect
+const urlParams = new URLSearchParams(location.search);
+if (urlParams.get('upgraded') === '1') {
+  history.replaceState({}, '', '/dashboard');
+  setTimeout(() => toast('🎉 Subscription activated! Welcome to AestheticAI.', 4000), 500);
 }
 
 // ── Boot ──
