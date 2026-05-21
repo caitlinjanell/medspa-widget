@@ -236,7 +236,13 @@ function esc(s) {
 }
 
 // ── Boot ──
+function setLoading(msg) {
+  const el = document.getElementById('main-content');
+  if (el) el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t3);font-size:13px">${msg}</div>`;
+}
+
 async function init() {
+  setLoading('Verifying session…');
   const me = await api('GET', '/api/auth/me');
   if (!me) {
     document.getElementById('main-content').innerHTML = `<div style="padding:2rem;text-align:center;color:var(--t2)">
@@ -253,6 +259,7 @@ async function init() {
   document.getElementById('sb-clinic').textContent = me.clinicName;
   document.getElementById('sb-email').textContent = me.email;
 
+  setLoading('Loading your dashboard…');
   const [w, l] = await Promise.all([api('GET', '/api/provider/widgets'), api('GET', '/api/provider/leads')]);
   widgets = w || [];
   leads = l || [];

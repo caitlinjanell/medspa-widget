@@ -207,11 +207,12 @@ app.get('/', (req, res) => {
   if (req.query.code) return res.sendFile(path.join(__dirname, '../public/index.html'));
   res.sendFile(path.join(__dirname, '../public/landing.html'));
 });
+const NO_CACHE = { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' } };
 app.get('/demo',      (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
-app.get('/admin',     (req, res) => res.sendFile(path.join(__dirname, '../public/admin.html')));
-app.get('/signup',    (req, res) => res.sendFile(path.join(__dirname, '../public/signup.html')));
-app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, '../public/login.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../public/dashboard.html')));
+app.get('/admin',     (req, res) => res.sendFile(path.join(__dirname, '../public/admin.html'), NO_CACHE));
+app.get('/signup',    (req, res) => res.sendFile(path.join(__dirname, '../public/signup.html'), NO_CACHE));
+app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, '../public/login.html'), NO_CACHE));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../public/dashboard.html'), NO_CACHE));
 app.get('/logout',    (req, res) => res.sendFile(path.join(__dirname, '../public/logout.html')));
 
 app.use(express.static(path.join(__dirname, '../public')));
