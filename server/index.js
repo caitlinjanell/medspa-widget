@@ -204,8 +204,9 @@ app.post('/api/auth/signup', async (req, res) => {
     const token = jwt.sign({ id: provider.id, email: provider.email }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, provider: { id: provider.id, email: provider.email, clinicName: provider.clinicName } });
   } catch (err) {
-    console.error('Signup error:', err.message);
-    res.status(500).json({ error: err.message });
+    const msg = err?.message || err?.code || String(err) || 'Unknown signup error';
+    console.error('Signup error:', msg, err?.code, err?.detail);
+    res.status(500).json({ error: msg });
   }
 });
 
