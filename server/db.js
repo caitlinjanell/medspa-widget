@@ -7,40 +7,38 @@ const pool = new Pool({
 });
 
 async function init() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS providers (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      clinic_name TEXT NOT NULL,
-      plan TEXT DEFAULT 'trial',
-      stripe_customer_id TEXT,
-      stripe_subscription_id TEXT,
-      subscription_status TEXT DEFAULT 'trialing',
-      trial_ends_at TEXT,
-      created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS widgets (
-      id TEXT PRIMARY KEY,
-      provider_id TEXT NOT NULL REFERENCES providers(id),
-      code TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL DEFAULT 'Primary Widget',
-      config TEXT NOT NULL DEFAULT '{}',
-      routing_type TEXT DEFAULT 'none',
-      routing_config TEXT DEFAULT '{}',
-      created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS leads (
-      id TEXT PRIMARY KEY,
-      provider_id TEXT NOT NULL,
-      widget_code TEXT NOT NULL,
-      fname TEXT, lname TEXT, email TEXT, phone TEXT,
-      areas TEXT, concerns TEXT, history TEXT, budget TEXT,
-      analysis TEXT, modalities TEXT, package TEXT,
-      has_photos INTEGER DEFAULT 0, skin_quality TEXT,
-      captured_at TEXT NOT NULL
-    );
-  `);
+  await pool.query(`CREATE TABLE IF NOT EXISTS providers (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    clinic_name TEXT NOT NULL,
+    plan TEXT DEFAULT 'trial',
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    subscription_status TEXT DEFAULT 'trialing',
+    trial_ends_at TEXT,
+    created_at TEXT NOT NULL
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS widgets (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL REFERENCES providers(id),
+    code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL DEFAULT 'Primary Widget',
+    config TEXT NOT NULL DEFAULT '{}',
+    routing_type TEXT DEFAULT 'none',
+    routing_config TEXT DEFAULT '{}',
+    created_at TEXT NOT NULL
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS leads (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL,
+    widget_code TEXT NOT NULL,
+    fname TEXT, lname TEXT, email TEXT, phone TEXT,
+    areas TEXT, concerns TEXT, history TEXT, budget TEXT,
+    analysis TEXT, modalities TEXT, package TEXT,
+    has_photos INTEGER DEFAULT 0, skin_quality TEXT,
+    captured_at TEXT NOT NULL
+  )`);
 }
 
 init().catch(err => console.error('DB init error:', err.message));
