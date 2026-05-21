@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Dashboard · Lumière Aesthetics</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;
+  --bg:#ffffff;--bg2:#f8f7fb;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.16);
+  --t1:#1a1a1a;--t2:#555;--t3:#999;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;background:#f4f2ef;min-height:100vh;color:var(--t1)}
+
+/* ── Login ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
+.login-card{width:100%;max-width:380px;background:var(--bg);border-radius:16px;border:0.5px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden}
+.login-hdr{padding:1.8rem 1.8rem 1.4rem;border-bottom:0.5px solid var(--border)}
+.login-logo{font-size:13px;font-weight:700;color:var(--ac-d);letter-spacing:-.01em;margin-bottom:.3rem}
+.login-title{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+.login-sub{font-size:13px;color:var(--t2);margin-top:.3rem}
+.login-body{padding:1.4rem 1.8rem 1.8rem}
+.flbl{font-size:12px;font-weight:500;color:var(--t2);display:block;margin-bottom:5px}
+.finp{width:100%;padding:10px 12px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--t1);font-size:14px;outline:none;transition:all .14s;font-family:inherit;margin-bottom:12px}
+.finp:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-l);background:var(--bg)}
+.btn-login{width:100%;padding:12px;border-radius:8px;border:none;background:var(--ac-d);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all .16s;font-family:inherit}
+.btn-login:hover{filter:brightness(1.1)}
+.login-err{font-size:12px;color:#c0392b;margin-top:.6rem;text-align:center;min-height:16px}
+
+/* ── Dashboard ── */
+.dash-wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+.dash-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.8rem;flex-wrap:wrap;gap:.75rem}
+.dash-title-group{}
+.dash-clinic{font-size:12px;font-weight:700;color:var(--ac-m);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.dash-title{font-size:26px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+.dash-actions{display:flex;gap:.6rem;align-items:center}
+.btn-sm{padding:8px 16px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;transition:all .14s;font-family:inherit}
+.btn-sm:hover{background:var(--bg2)}
+.btn-sm.danger{color:#c0392b;border-color:rgba(192,57,43,.3)}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.8rem}
+.stat-card{background:var(--bg);border-radius:12px;border:0.5px solid var(--border);padding:1rem 1.2rem}
+.stat-label{font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;color:var(--t3);margin-bottom:.4rem}
+.stat-val{font-size:28px;font-weight:700;color:var(--t1);letter-spacing:-.02em;line-height:1}
+.stat-sub{font-size:12px;color:var(--t3);margin-top:.3rem}
+
+/* Search / filter */
+.filter-bar{display:flex;gap:.75rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.search-inp{flex:1;min-width:200px;padding:9px 12px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg);color:var(--t1);font-size:13px;outline:none;font-family:inherit}
+.search-inp:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-l)}
+.filter-sel{padding:9px 12px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg);color:var(--t2);font-size:13px;outline:none;font-family:inherit;cursor:pointer}
+.filter-sel:focus{border-color:var(--ac)}
+
+/* Lead cards */
+.leads-grid{display:flex;flex-direction:column;gap:.75rem}
+.lead-card{background:var(--bg);border-radius:12px;border:0.5px solid var(--border);overflow:hidden;transition:box-shadow .14s}
+.lead-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.07)}
+.lead-main{padding:.9rem 1.1rem;display:flex;align-items:flex-start;gap:1rem;cursor:pointer}
+.lead-avatar{width:38px;height:38px;border-radius:50%;background:var(--ac-l);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--ac-d);flex-shrink:0}
+.lead-info{flex:1;min-width:0}
+.lead-name{font-size:15px;font-weight:600;color:var(--t1);letter-spacing:-.01em}
+.lead-contact{font-size:12px;color:var(--t2);margin-top:2px;display:flex;gap:.75rem;flex-wrap:wrap}
+.lead-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
+.tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;white-space:nowrap}
+.tag-budget{background:var(--ac-l);color:var(--ac-d)}
+.tag-area{background:var(--bg2);color:var(--t2);border:0.5px solid var(--border2)}
+.tag-photos{background:#f0fdf4;color:#15803d;border:0.5px solid #bbf7d0}
+.lead-date{font-size:11px;color:var(--t3);flex-shrink:0;text-align:right;margin-top:2px}
+.lead-chevron{font-size:16px;color:var(--t3);flex-shrink:0;margin-top:8px;transition:transform .2s}
+.lead-chevron.open{transform:rotate(90deg)}
+.lead-detail{border-top:0.5px solid var(--border);padding:.9rem 1.1rem;background:var(--bg2);display:none}
+.lead-detail.open{display:block}
+.detail-section{margin-bottom:.9rem}
+.detail-section:last-child{margin-bottom:0}
+.detail-lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--t3);margin-bottom:.3rem}
+.detail-val{font-size:13px;color:var(--t2);line-height:1.6}
+.detail-chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--t3)}
+.empty-icon{font-size:36px;margin-bottom:.7rem}
+.empty-msg{font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <div class="login-hdr">
+      <div class="login-logo">Lumière Aesthetics</div>
+      <div class="login-title">Lead Dashboard</div>
+      <div class="login-sub">Enter your admin password to continue.</div>
+    </div>
+    <div class="login-body">
+      <label class="flbl">Password</label>
+      <input class="finp" id="pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+      <button class="btn-login" onclick="login()">Sign in →</button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <div class="dash-wrap">
+    <div class="dash-hdr">
+      <div class="dash-title-group">
+        <div class="dash-clinic">Lumière Aesthetics</div>
+        <div class="dash-title">Lead Dashboard</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
+        <button class="btn-sm" onclick="refreshLeads()">Refresh</button>
+        <button class="btn-sm danger" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+
+    <div class="stats-row" id="stats-row"></div>
+
+    <div class="filter-bar">
+      <input class="search-inp" id="search-inp" placeholder="Search by name or email…" oninput="renderLeads()">
+      <select class="filter-sel" id="budget-filter" onchange="renderLeads()">
+        <option value="">All budgets</option>
+        <option>Under $500</option>
+        <option>$500 – $1,200</option>
+        <option>$1,200 – $2,500</option>
+        <option>Premium / full restoration</option>
+      </select>
+    </div>
+
+    <div class="leads-grid" id="leads-list"></div>
+  </div>
+</div>
+
+<script>
+let ALL_LEADS = [];
+let SESSION_PW = '';
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function login() {
+  const pw = $('pw').value;
+  $('login-err').textContent = '';
+  try {
+    const res = await fetch('/api/leads?password=' + encodeURIComponent(pw));
+    if (!res.ok) throw new Error('bad');
+    ALL_LEADS = await res.json();
+    SESSION_PW = pw;
+    sessionStorage.setItem('adminPw', pw);
+    $('login-screen').style.display = 'none';
+    $('dashboard').style.display = '';
+    renderStats();
+    renderLeads();
+  } catch {
+    $('login-err').textContent = 'Incorrect password. Please try again.';
+    $('pw').focus();
+  }
+}
+
+async function refreshLeads() {
+  try {
+    const res = await fetch('/api/leads?password=' + encodeURIComponent(SESSION_PW));
+    if (!res.ok) throw new Error('bad');
+    ALL_LEADS = await res.json();
+    renderStats();
+    renderLeads();
+  } catch {
+    alert('Failed to refresh. Please reload the page.');
+  }
+}
+
+function signOut() {
+  SESSION_PW = '';
+  ALL_LEADS = [];
+  sessionStorage.removeItem('adminPw');
+  $('pw').value = '';
+  $('dashboard').style.display = 'none';
+  $('login-screen').style.display = '';
+}
+
+function renderStats() {
+  const now = new Date();
+  const todayStr = now.toDateString();
+  const todayCount = ALL_LEADS.filter(l => new Date(l.capturedAt).toDateString() === todayStr).length;
+  const budgetCounts = {};
+  ALL_LEADS.forEach(l => { budgetCounts[l.budget] = (budgetCounts[l.budget] || 0) + 1; });
+  const topBudget = Object.entries(budgetCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  const withPhotos = ALL_LEADS.filter(l => l.hasPhotos).length;
+
+  $('stats-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total leads</div>
+      <div class="stat-val">${ALL_LEADS.length}</div>
+      <div class="stat-sub">all time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today</div>
+      <div class="stat-val">${todayCount}</div>
+      <div class="stat-sub">${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">With photos</div>
+      <div class="stat-val">${withPhotos}</div>
+      <div class="stat-sub">AI vision analysis</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Top budget range</div>
+      <div class="stat-val" style="font-size:16px;margin-top:4px">${esc(topBudget)}</div>
+      <div class="stat-sub">&nbsp;</div>
+    </div>`;
+}
+
+function renderLeads() {
+  const q = ($('search-inp').value || '').toLowerCase();
+  const budgetF = $('budget-filter').value;
+
+  const filtered = ALL_LEADS.filter(l => {
+    const name = `${l.fname} ${l.lname}`.toLowerCase();
+    const email = (l.email || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q);
+    const matchB = !budgetF || l.budget === budgetF;
+    return matchQ && matchB;
+  });
+
+  if (!filtered.length) {
+    $('leads-list').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🌿</div>
+        <div class="empty-msg">${ALL_LEADS.length ? 'No leads match your filters.' : 'No leads captured yet. Share the widget to get started.'}</div>
+      </div>`;
+    return;
+  }
+
+  $('leads-list').innerHTML = filtered.map((l, i) => {
+    const initials = ((l.fname || '?')[0] + (l.lname || '?')[0]).toUpperCase();
+    const dt = new Date(l.capturedAt);
+    const dateLabel = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeLabel = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const areas = Array.isArray(l.areas) ? l.areas : [];
+    const concerns = Array.isArray(l.concerns) ? l.concerns : [];
+    const modalities = Array.isArray(l.modalities) ? l.modalities : [];
+
+    return `
+    <div class="lead-card" id="lc-${i}">
+      <div class="lead-main" onclick="toggleDetail(${i})">
+        <div class="lead-avatar">${esc(initials)}</div>
+        <div class="lead-info">
+          <div class="lead-name">${esc(l.fname)} ${esc(l.lname)}</div>
+          <div class="lead-contact">
+            <span>✉ ${esc(l.email)}</span>
+            ${l.phone ? `<span>📞 ${esc(l.phone)}</span>` : ''}
+          </div>
+          <div class="lead-meta">
+            ${l.budget ? `<span class="tag tag-budget">${esc(l.budget)}</span>` : ''}
+            ${areas.slice(0,3).map(a => `<span class="tag tag-area">${esc(a)}</span>`).join('')}
+            ${areas.length > 3 ? `<span class="tag tag-area">+${areas.length - 3} more</span>` : ''}
+            ${l.hasPhotos ? `<span class="tag tag-photos">📷 Photos</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="lead-date">${dateLabel}<br>${timeLabel}</div>
+          <div class="lead-chevron" id="chev-${i}">›</div>
+        </div>
+      </div>
+      <div class="lead-detail" id="ld-${i}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.9rem">
+          <div>
+            <div class="detail-lbl">Treatment history</div>
+            <div class="detail-val">${esc(l.history || '—')}</div>
+          </div>
+          <div>
+            <div class="detail-lbl">Budget range</div>
+            <div class="detail-val">${esc(l.budget || '—')}</div>
+          </div>
+        </div>
+        ${concerns.length ? `
+        <div class="detail-section">
+          <div class="detail-lbl">Primary concerns</div>
+          <div class="detail-chips">
+            ${concerns.map(c => `<span class="tag tag-area">${esc(c)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${areas.length ? `
+        <div class="detail-section">
+          <div class="detail-lbl">Focus areas</div>
+          <div class="detail-chips">
+            ${areas.map(a => `<span class="tag tag-area">${esc(a)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${modalities.length ? `
+        <div class="detail-section">
+          <div class="detail-lbl">AI recommended treatments</div>
+          <div class="detail-chips">
+            ${modalities.map(m => `<span class="tag tag-budget">${esc(m)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${l.package ? `
+        <div class="detail-section">
+          <div class="detail-lbl">Suggested package</div>
+          <div class="detail-val" style="font-weight:600;color:var(--ac-d)">${esc(l.package)}</div>
+        </div>` : ''}
+        ${l.analysis ? `
+        <div class="detail-section">
+          <div class="detail-lbl">AI clinical summary</div>
+          <div class="detail-val">${esc(l.analysis)}</div>
+        </div>` : ''}
+        ${l.skinQuality ? `
+        <div class="detail-section">
+          <div class="detail-lbl">Skin quality (AI assessment)</div>
+          <div class="detail-val">${esc(l.skinQuality)}</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDetail(i) {
+  const detail = $('ld-' + i);
+  const chev = $('chev-' + i);
+  const isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+
+function exportCSV() {
+  if (!ALL_LEADS.length) return alert('No leads to export.');
+  const cols = ['capturedAt','fname','lname','email','phone','budget','history','areas','concerns','modalities','package','hasPhotos','skinQuality'];
+  const rows = [cols.join(',')];
+  ALL_LEADS.forEach(l => {
+    rows.push(cols.map(c => {
+      const v = Array.isArray(l[c]) ? l[c].join('; ') : (l[c] ?? '');
+      return `"${String(v).replace(/"/g, '""')}"`;
+    }).join(','));
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `leads-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Auto-restore session if password saved in sessionStorage
+const saved = sessionStorage.getItem('adminPw');
+if (saved) {
+  $('pw').value = saved;
+  login();
+}
+</script>
+</body>
+</html>

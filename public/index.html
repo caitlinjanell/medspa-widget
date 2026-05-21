@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aesthetic Consultation Widget</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;
+  --bg:#ffffff;--bg2:#f8f7fb;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
+  --t1:#1a1a1a;--t2:#555;--t3:#999;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;
+}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f2ef;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
+.shell{width:100%;max-width:480px;background:var(--bg);border-radius:var(--r-xl);border:0.5px solid var(--border);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 8px 32px rgba(0,0,0,0.07)}
+.prog-bg{height:3px;background:var(--bg2)}
+.prog{height:3px;background:var(--ac);transition:width .45s cubic-bezier(.4,0,.2,1);width:20%}
+.hdr{padding:.9rem 1.4rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:56px}
+.hdr-name{font-size:15px;font-weight:600;color:var(--t1);letter-spacing:-.01em}
+.hdr-logo{max-height:30px;max-width:140px;object-fit:contain}
+.hdr-tag{font-size:11px;color:var(--t3);letter-spacing:.05em;text-transform:uppercase}
+.body{padding:1.6rem 1.4rem 1.4rem}
+.anim{animation:si .3s cubic-bezier(.4,0,.2,1)}
+@keyframes si{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+.eye{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:.4rem}
+.eye.ac{color:var(--ac-m)}
+.ttl{font-size:21px;font-weight:600;color:var(--t1);line-height:1.22;margin-bottom:.3rem;letter-spacing:-.02em}
+.sub{font-size:14px;color:var(--t2);line-height:1.65;margin-bottom:1.4rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.4rem}
+.chip{padding:8px 15px;border-radius:999px;border:0.5px solid var(--border2);font-size:13px;cursor:pointer;background:var(--bg);color:var(--t2);transition:all .16s;user-select:none;font-family:inherit}
+.chip:hover{border-color:var(--ac);color:var(--ac-m)}
+.chip.on{background:var(--ac-l);border-color:var(--ac);color:var(--ac-d);font-weight:600}
+.glbl{font-size:12px;font-weight:600;color:var(--t2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.btn{width:100%;padding:13px;border-radius:var(--r-sm);border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;font-family:inherit;letter-spacing:.01em}
+.pri{background:var(--ac);color:var(--ac-d)}
+.pri:hover:not(:disabled){filter:brightness(.92);transform:translateY(-1px)}
+.pri:active:not(:disabled){transform:translateY(0)}
+.pri:disabled{opacity:.4;cursor:not-allowed}
+.gho{background:transparent;border:0.5px solid var(--border2);color:var(--t2);margin-bottom:8px}
+.gho:hover{background:var(--bg2)}
+.flbl{font-size:12px;font-weight:500;color:var(--t2);display:block;margin-bottom:5px}
+.finp{width:100%;padding:10px 12px;border-radius:var(--r-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--t1);font-size:14px;outline:none;transition:all .14s;font-family:inherit}
+.finp:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-l);background:var(--bg)}
+.frow{margin-bottom:11px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.pslot{border:1.5px dashed var(--border2);border-radius:var(--r-md);padding:1.2rem .5rem;text-align:center;cursor:pointer;background:var(--bg2);transition:all .18s;position:relative;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.pslot:hover{border-color:var(--ac);background:var(--ac-l)}
+.pslot.on{padding:.4rem;border-style:solid;border-color:var(--ac)}
+.pslot img{width:100%;height:120px;object-fit:cover;border-radius:8px;display:block}
+.pslot-lbl{font-size:12px;color:var(--t3)}
+.pslot-hint{font-size:11px;color:var(--t3);opacity:.7}
+.pslot-ico{font-size:20px;margin-bottom:2px}
+.rm{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:0.5px solid var(--border2);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--t2);z-index:2}
+.aibadge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;background:var(--ac-l);color:var(--ac-d);font-size:11px;font-weight:600;margin-bottom:.8rem;letter-spacing:.04em;text-transform:uppercase}
+.ibox{background:var(--bg2);border-radius:var(--r-sm);padding:10px 12px;display:flex;gap:9px;align-items:flex-start;margin-bottom:1.2rem}
+.ibox-t{font-size:12px;color:var(--t3);line-height:1.65}
+.disc{font-size:11px;color:var(--t3);line-height:1.65;padding:10px 12px;background:var(--bg2);border-radius:var(--r-sm);border-left:2px solid var(--border2)}
+.ldots{display:flex;align-items:center;justify-content:center;gap:7px;padding:2.5rem 0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ac);animation:dp 1.3s infinite ease-in-out}
+.dot:nth-child(2){animation-delay:.22s}.dot:nth-child(3){animation-delay:.44s}
+@keyframes dp{0%,80%,100%{transform:scale(.65);opacity:.4}40%{transform:scale(1);opacity:1}}
+.err-box{background:#fff5f5;border:0.5px solid #fbc9c9;border-radius:var(--r-sm);padding:12px 14px;margin-bottom:1rem;font-size:13px;color:#c0392b;line-height:1.55}
+.ftr{text-align:center;padding:.75rem;border-top:0.5px solid var(--border);font-size:11px;color:var(--t3);letter-spacing:.04em;background:var(--bg2)}
+
+/* ── Premium result document ── */
+.plan-doc{border:0.5px solid var(--border2);border-radius:var(--r-lg);overflow:hidden;margin-bottom:1rem}
+.plan-doc-hdr{padding:1rem 1.2rem;background:var(--ac-d);display:flex;justify-content:space-between;align-items:flex-end;gap:1rem}
+.plan-doc-hdr-l{color:#fff;min-width:0}
+.plan-doc-hdr-badge{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.65;margin-bottom:4px}
+.plan-doc-hdr-name{font-size:18px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan-doc-hdr-num{font-size:11px;opacity:.5;margin-top:3px;font-family:monospace;letter-spacing:.05em}
+.plan-doc-hdr-r{text-align:right;color:#fff;flex-shrink:0}
+.plan-doc-hdr-clinic{font-size:13px;font-weight:600;opacity:.9}
+.plan-doc-hdr-date{font-size:11px;opacity:.55;margin-top:3px}
+.plan-section{padding:.9rem 1.2rem;border-bottom:0.5px solid var(--border)}
+.plan-section:last-child{border-bottom:none}
+.plan-sec-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--t3);margin-bottom:.75rem;display:flex;align-items:center;gap:7px}
+.plan-sec-lbl::after{content:'';flex:1;height:0.5px;background:var(--border)}
+.treat-row{display:flex;gap:.85rem;align-items:flex-start;padding:.65rem 0;border-bottom:0.5px solid var(--border)}
+.treat-row:last-child{border-bottom:none;padding-bottom:0}
+.treat-num{min-width:24px;height:24px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ac-d);margin-top:1px;flex-shrink:0}
+.treat-name{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:3px}
+.treat-why{font-size:13px;color:var(--t2);line-height:1.55;margin-bottom:6px}
+.treat-long{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ac-m);font-weight:500;background:var(--ac-l);padding:3px 10px;border-radius:999px}
+.invest-pkg{font-size:16px;font-weight:700;color:var(--t1);letter-spacing:-.01em;margin-bottom:5px}
+.invest-desc{font-size:13px;color:var(--t2);line-height:1.6}
+
+/* ── Chat widget ── */
+.chat-hdr-bar{display:flex;align-items:center;gap:10px;padding:.85rem 1.2rem;border-bottom:0.5px solid var(--border);background:var(--bg)}
+.chat-back{background:none;border:none;cursor:pointer;font-size:20px;color:var(--t2);padding:2px 4px;line-height:1;flex-shrink:0;transition:color .14s}
+.chat-back:hover{color:var(--t1)}
+.chat-hdr-info{flex:1;min-width:0}
+.chat-hdr-name{font-size:14px;font-weight:600;color:var(--t1)}
+.chat-hdr-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.chat-online{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.2)}
+.chat-msgs-area{height:310px;overflow-y:auto;padding:.9rem 1.2rem;display:flex;flex-direction:column;gap:9px;background:var(--bg2)}
+.chat-msg-row{display:flex}
+.chat-msg-row.user{justify-content:flex-end}
+.chat-msg-row.ai{justify-content:flex-start}
+.chat-bubble{max-width:83%;padding:9px 13px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word}
+.chat-bubble.ai{background:var(--bg);color:var(--t1);border:0.5px solid var(--border);border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.chat-bubble.user{background:var(--ac-d);color:#fff;border-bottom-right-radius:4px}
+.chat-typing{display:flex;gap:4px;align-items:center;padding:2px 0}
+.chat-typing span{width:6px;height:6px;border-radius:50%;background:var(--ac);animation:dp 1.1s infinite ease-in-out}
+.chat-typing span:nth-child(2){animation-delay:.2s}
+.chat-typing span:nth-child(3){animation-delay:.4s}
+.chat-footer-bar{padding:.8rem 1.2rem;border-top:0.5px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--bg)}
+.chat-inp{flex:1;padding:9px 12px;border-radius:var(--r-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--t1);font-size:13px;outline:none;font-family:inherit;resize:none;max-height:90px;min-height:38px;line-height:1.5;transition:border-color .14s,box-shadow .14s}
+.chat-inp:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-l);background:var(--bg)}
+.chat-send{padding:9px 16px;border-radius:var(--r-sm);border:none;background:var(--ac-d);color:#fff;font-weight:600;font-size:13px;cursor:pointer;transition:all .16s;font-family:inherit;white-space:nowrap;height:38px}
+.chat-send:hover:not(:disabled){filter:brightness(1.1)}
+.chat-send:disabled{opacity:.35;cursor:not-allowed}
+.chat-legal{font-size:10px;color:var(--t3);text-align:center;padding:.5rem 1.2rem;border-top:0.5px solid var(--border);background:var(--bg2);line-height:1.5}
+
+@media(max-width:480px){body{padding:0;align-items:flex-start;background:var(--bg)}.shell{border-radius:0;box-shadow:none;min-height:100vh}.fgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="prog-bg"><div class="prog" id="prog"></div></div>
+  <div class="hdr" id="hdr"></div>
+  <div class="body" id="body"></div>
+  <div class="ftr" id="ftr"></div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CLINIC CONFIGURATION — edit this object
+// ─────────────────────────────────────────────
+const CLINIC = {
+  name:       'Lumière Aesthetics',
+  logoUrl:    '',
+  accent:     '#b49dd4',
+  accentLight:'#EEEDFE',
+  accentDark: '#3C3489',
+  accentMid:  '#7c5ca8',
+  bookingUrl: 'https://example.com/book',
+  poweredBy:  'Aesthetic Intelligence™',
+  apiEndpoint:'/api/analyze',
+};
+
+const R = document.documentElement.style;
+R.setProperty('--ac',     CLINIC.accent);
+R.setProperty('--ac-l',   CLINIC.accentLight);
+R.setProperty('--ac-d',   CLINIC.accentDark);
+R.setProperty('--ac-m',   CLINIC.accentMid);
+
+const hdr = document.getElementById('hdr');
+hdr.innerHTML = CLINIC.logoUrl
+  ? `<img src="${CLINIC.logoUrl}" class="hdr-logo" alt="${CLINIC.name}"><span class="hdr-tag">Pre-consultation</span>`
+  : `<span class="hdr-name">${CLINIC.name}</span><span class="hdr-tag">Pre-consultation</span>`;
+document.getElementById('ftr').textContent = CLINIC.poweredBy + ' · Confidential & Secure';
+
+// ─────────────────────────────────────────────
+//  App state
+// ─────────────────────────────────────────────
+const S = {
+  step:1, areas:[], concerns:[], history:'', budget:'',
+  fname:'', lname:'', email:'', phone:'',
+  photos:{front:null,left:null,right:null,smile:null},
+  pa:null,
+  results:null, leadSaved:false,
+  chatMsgs:[], chatDisplay:[], chatSys:'',
+};
+
+const AREAS    = ['Forehead',"Crow's feet",'Lips','Cheeks','Jawline','Skin texture'];
+const CONCERNS = ['Fine lines / wrinkles','Volume loss','Asymmetry','Dullness / sun damage','Sagging skin'];
+const HISTORY  = ['New to aesthetics','Had toxins before','Had dermal fillers','Had lasers / peels'];
+const BUDGET   = ['Under $500','$500 – $1,200','$1,200 – $2,500','Premium / full restoration'];
+const SLOTS    = [
+  {k:'front', l:'Front view',  h:'Straight ahead'},
+  {k:'left',  l:'Left side',   h:'45° left'},
+  {k:'right', l:'Right side',  h:'45° right'},
+  {k:'smile', l:'Smiling',     h:'Natural smile'},
+];
+
+const $ = id => document.getElementById(id);
+const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────
+//  Navigation
+// ─────────────────────────────────────────────
+const PROGS = [20, 40, 60, 80, 100];
+
+function go(n) {
+  S.step = n;
+  $('prog').style.width = PROGS[n - 1] + '%';
+  const b = $('body');
+  b.style.padding = '';
+  b.innerHTML = STEPS[n]();
+  b.className = 'body anim';
+}
+
+function ck() {
+  const btn = $('nb'); if (!btn) return;
+  btn.disabled = !({
+    1: S.areas.length > 0,
+    2: S.concerns.length > 0,
+    3: S.history && S.budget,
+    4: Object.values(S.photos).some(v => v),
+    5: S.fname && S.lname && S.email && validEmail(S.email),
+  }[S.step]);
+}
+
+// ─────────────────────────────────────────────
+//  Chip interactions
+// ─────────────────────────────────────────────
+function tog(el, v, k) {
+  const a = S[k], i = a.indexOf(v);
+  if (i > -1) { a.splice(i, 1); el.classList.remove('on'); }
+  else { a.push(v); el.classList.add('on'); }
+  ck();
+}
+
+function solo(el, v, f) {
+  document.querySelectorAll(`.chip[data-g="${f}"]`).forEach(c => c.classList.remove('on'));
+  el.classList.add('on'); S[f] = v; ck();
+}
+
+function fset(id, f) { S[f] = $(id).value.trim(); ck(); }
+
+// ─────────────────────────────────────────────
+//  Photo handling
+// ─────────────────────────────────────────────
+function upload(k) {
+  const inp = $('i-' + k);
+  inp.onchange = function () {
+    const file = this.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = e => { S.photos[k] = e.target.result; drawSlots(); ck(); };
+    r.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function rmPhoto(k, e) { e.stopPropagation(); S.photos[k] = null; drawSlots(); ck(); }
+
+function drawSlots() {
+  SLOTS.forEach(sl => {
+    const el = $('sl-' + sl.k); if (!el) return;
+    if (S.photos[sl.k]) {
+      el.className = 'pslot on';
+      el.innerHTML = `<button class="rm" onclick="rmPhoto('${sl.k}',event)">✕</button><img src="${S.photos[sl.k]}" alt="${sl.l}"><span class="pslot-lbl" style="margin-top:4px;color:var(--ac-m);font-weight:500">${sl.l}</span>`;
+    } else {
+      el.className = 'pslot';
+      el.innerHTML = `<div class="pslot-ico">📷</div><div class="pslot-lbl">${sl.l}</div><div class="pslot-hint">${sl.h}</div>`;
+    }
+    el.onclick = () => upload(sl.k);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  Step templates
+// ─────────────────────────────────────────────
+const STEPS = {
+  1: () => `
+    <div class="eye">Step 1 of 5</div>
+    <div class="ttl">Which areas are you focusing on?</div>
+    <div class="sub">Select all you'd like to address. No wrong answers.</div>
+    <div class="chips">
+      ${AREAS.map(a => `<button class="chip${S.areas.includes(a)?' on':''}" onclick="tog(this,'${a.replace(/'/g,"\\'")}','areas')">${a}</button>`).join('')}
+    </div>
+    <button class="btn pri" id="nb" onclick="go(2)" ${S.areas.length?'':'disabled'}>Continue</button>`,
+
+  2: () => `
+    <div class="eye">Step 2 of 5</div>
+    <div class="ttl">What are your primary concerns?</div>
+    <div class="sub">Select everything that resonates with you.</div>
+    <div class="chips">
+      ${CONCERNS.map(c => `<button class="chip${S.concerns.includes(c)?' on':''}" onclick="tog(this,'${c}','concerns')">${c}</button>`).join('')}
+    </div>
+    <button class="btn gho" onclick="go(1)">← Back</button>
+    <button class="btn pri" id="nb" onclick="go(3)" ${S.concerns.length?'':'disabled'}>Continue</button>`,
+
+  3: () => `
+    <div class="eye">Step 3 of 5</div>
+    <div class="ttl">A little background</div>
+    <div class="sub">Help us personalize your results.</div>
+    <div class="glbl">Treatment history</div>
+    <div class="chips">
+      ${HISTORY.map(h => `<button class="chip${S.history===h?' on':''}" data-g="history" onclick="solo(this,'${h}','history')">${h}</button>`).join('')}
+    </div>
+    <div class="glbl" style="margin-top:4px">Investment comfort zone</div>
+    <div class="chips">
+      ${BUDGET.map(b => `<button class="chip${S.budget===b?' on':''}" data-g="budget" onclick="solo(this,'${b}','budget')">${b}</button>`).join('')}
+    </div>
+    <button class="btn gho" onclick="go(2)">← Back</button>
+    <button class="btn pri" id="nb" onclick="go(4)" ${S.history&&S.budget?'':'disabled'}>Continue</button>`,
+
+  4: () => {
+    setTimeout(() => { drawSlots(); ck(); }, 0);
+    return `
+    <div class="eye">Step 4 of 5</div>
+    <div class="aibadge">✦ AI photo analysis</div>
+    <div class="ttl">Upload your photos</div>
+    <div class="sub">At least one photo required. All four gives the best results.</div>
+    <div class="ibox">
+      <span style="font-size:15px;margin-top:1px">🔒</span>
+      <span class="ibox-t">Photos are processed in-session only and never stored or shared.</span>
+    </div>
+    <div class="pgrid">
+      ${SLOTS.map(sl => `
+        <div class="pslot" id="sl-${sl.k}">
+          <div class="pslot-ico">📷</div>
+          <div class="pslot-lbl">${sl.l}</div>
+          <div class="pslot-hint">${sl.h}</div>
+        </div>
+        <input type="file" id="i-${sl.k}" accept="image/*" capture="user" style="display:none">`).join('')}
+    </div>
+    <button class="btn gho" onclick="go(3)">← Back</button>
+    <button class="btn pri" id="nb" onclick="go(5)" disabled>Continue</button>`;
+  },
+
+  5: () => `
+    <div class="eye">Step 5 of 5</div>
+    <div class="ttl">Receive your personalized guide</div>
+    <div class="sub">Enter your details to unlock your custom treatment path.</div>
+    <div class="fgrid">
+      <div class="frow">
+        <label class="flbl">First name</label>
+        <input class="finp" id="ifn" value="${S.fname}" placeholder="Ava" oninput="fset('ifn','fname')">
+      </div>
+      <div class="frow">
+        <label class="flbl">Last name</label>
+        <input class="finp" id="iln" value="${S.lname}" placeholder="Chen" oninput="fset('iln','lname')">
+      </div>
+    </div>
+    <div class="frow">
+      <label class="flbl">Email</label>
+      <input class="finp" id="iem" type="email" value="${S.email}" placeholder="ava@example.com" oninput="fset('iem','email')">
+    </div>
+    <div class="frow">
+      <label class="flbl">Phone <span style="color:var(--t3);font-weight:400">(optional)</span></label>
+      <input class="finp" id="iph" value="${S.phone}" placeholder="(555) 000-0000" oninput="S.phone=this.value.trim()">
+    </div>
+    <div class="disc">🔒 Your information is kept confidential and only shared with ${CLINIC.name}'s licensed providers.</div>
+    <div style="margin-top:1rem">
+      <button class="btn gho" onclick="go(4)">← Back</button>
+      <button class="btn pri" id="nb" onclick="analyze()" ${S.fname&&S.lname&&S.email&&validEmail(S.email)?'':'disabled'}>Unlock my results →</button>
+    </div>`,
+};
+
+// ─────────────────────────────────────────────
+//  Loading screen
+// ─────────────────────────────────────────────
+function loading(eye, ttl) {
+  $('prog').style.width = '100%';
+  const b = $('body');
+  b.className = 'body';
+  b.style.padding = '';
+  b.innerHTML = `
+    <div class="eye ac">${eye}</div>
+    <div class="ttl">${ttl}</div>
+    <div class="ldots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+}
+
+// ─────────────────────────────────────────────
+//  API calls (via local proxy)
+// ─────────────────────────────────────────────
+async function callAPI(messages, maxTokens = 1000) {
+  const res = await fetch(CLINIC.apiEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, maxTokens }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const text = data.content.filter(c => c.type === 'text').map(c => c.text).join('');
+  return JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+}
+
+// ─────────────────────────────────────────────
+//  Two-stage analysis
+// ─────────────────────────────────────────────
+async function analyze() {
+  loading('Analyzing your photos…', 'Visual assessment in progress');
+
+  const photoEntries = SLOTS.filter(sl => S.photos[sl.k]);
+  let pa = null;
+
+  if (photoEntries.length > 0) {
+    try {
+      const content = [];
+      for (const sl of photoEntries) {
+        const src  = S.photos[sl.k];
+        const mime = src.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+        const b64  = src.split(',')[1];
+        content.push({ type: 'image', source: { type: 'base64', media_type: mime, data: b64 } });
+      }
+      content.push({
+        type: 'text',
+        text: `You are an expert aesthetic medical analyst reviewing ${photoEntries.length} facial photo(s): ${photoEntries.map(s => s.l).join(', ')}.\n\nAnalyze observable surface characteristics only (skin texture, tone, volume distribution, symmetry, line patterns). Do NOT diagnose medical conditions.\n\nRespond with ONLY a JSON object, no other text:\n{"visualObservations":"2-3 sentence clinical description","photoInformedAreas":["specific","focus","areas"],"skinQualityScore":"Excellent or Good or Fair","photoNotes":"1 sentence about photo quality for the provider"}`,
+      });
+      pa = await callAPI([{ role: 'user', content }], 600);
+      S.pa = pa;
+    } catch (err) {
+      console.warn('Photo analysis failed:', err.message);
+    }
+  }
+
+  loading('Building your guide…', 'Personalizing your recommendations');
+
+  const photoCtx = pa
+    ? `\nPhoto analysis (${photoEntries.length} image${photoEntries.length > 1 ? 's' : ''}):\n- Observations: ${pa.visualObservations}\n- Identified areas: ${(pa.photoInformedAreas || []).join(', ')}\n- Skin quality: ${pa.skinQualityScore || 'N/A'}\n`
+    : '';
+
+  const prompt = `You are an expert aesthetic medical consultant. Generate personalized treatment recommendations based on this client's pre-consultation intake.\n\nClient profile:\n- Target areas: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Treatment history: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "2-sentence clinical summary validating their goals and explaining the underlying science${pa ? '. Integrate visual findings where relevant.' : ''}",\n  "recommendedModalities": [\n    {"name":"treatment name","why":"1-2 sentence rationale","expectedLongevity":"duration"}\n  ],\n  "estimatedInvestment": {"package":"Package Name","description":"1-2 sentence cost framing"}\n}\nTone: clinical, reassuring, high-end. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with'. Recommend 2-4 modalities.`;
+
+  try {
+    const d = await callAPI([{ role: 'user', content: prompt }], 1000);
+    showResult(d);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Lead capture
+// ─────────────────────────────────────────────
+async function saveLead(d) {
+  if (S.leadSaved) return;
+  S.leadSaved = true;
+  try {
+    await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fname: S.fname, lname: S.lname, email: S.email, phone: S.phone || '',
+        areas: S.areas, concerns: S.concerns, history: S.history, budget: S.budget,
+        analysis: d.analysis || '',
+        modalities: (d.recommendedModalities || []).map(m => m.name),
+        package: d.estimatedInvestment?.package || '',
+        hasPhotos: Object.values(S.photos).some(v => v),
+        skinQuality: S.pa?.skinQualityScore || null,
+      }),
+    });
+  } catch (err) {
+    console.warn('Lead save failed (non-critical):', err.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Premium result screen
+// ─────────────────────────────────────────────
+function showResult(d) {
+  S.results = d;
+  saveLead(d);
+
+  // Build VA system prompt
+  const mods = d.recommendedModalities || [];
+  S.chatSys = `You are the AI aesthetic consultant for ${CLINIC.name}, a premium medical aesthetics practice. You have just completed a pre-consultation with ${S.fname} ${S.lname} and generated their personalized treatment plan.
+
+Client profile:
+- Name: ${S.fname} ${S.lname}
+- Areas of interest: ${S.areas.join(', ')}
+- Primary concerns: ${S.concerns.join(', ')}
+- Treatment history: ${S.history}
+- Investment comfort zone: ${S.budget}
+${S.pa ? `- Visual assessment: ${S.pa.visualObservations} (Skin quality: ${S.pa.skinQualityScore})` : ''}
+
+Clinical summary: ${d.analysis || ''}
+
+Recommended treatments:
+${mods.map((m, i) => `${i + 1}. ${m.name}: ${m.why} (Typical longevity: ${m.expectedLongevity})`).join('\n')}
+
+Investment package: ${d.estimatedInvestment?.package || ''} — ${d.estimatedInvestment?.description || ''}
+
+Your role as ${CLINIC.name}'s AI Guide:
+- Answer questions about their recommended treatments warmly and knowledgeably
+- Explain what each treatment involves, typical downtime, and what to expect
+- Discuss realistic price ranges when asked (note that final pricing requires in-person consultation)
+- Help them feel confident and excited about booking
+- Never guarantee specific outcomes
+- Keep responses to 2-4 sentences — concise and conversational
+- Use ${S.fname}'s first name occasionally to keep it personal`;
+
+  // Initialize chat display with a personalized greeting
+  S.chatMsgs = [];
+  S.chatDisplay = [{
+    role: 'ai',
+    text: `Hi ${S.fname}! I've reviewed your personalized treatment plan and I'm here to answer any questions — about the recommended treatments, what to expect, pricing, or how to get started. What would you like to know?`,
+  }];
+
+  const cId = 'LM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const pa = S.pa;
+
+  const b = $('body');
+  b.className = 'body anim';
+  b.style.padding = '0';
+  b.innerHTML = `
+  <div style="padding:1.2rem 1.4rem .6rem">
+    <div class="eye ac" style="margin-bottom:.2rem">Your personalized treatment plan</div>
+  </div>
+  <div style="padding:0 1.2rem">
+    <div class="plan-doc">
+      <div class="plan-doc-hdr">
+        <div class="plan-doc-hdr-l">
+          <div class="plan-doc-hdr-badge">Aesthetic Treatment Plan</div>
+          <div class="plan-doc-hdr-name">${esc(S.fname)} ${esc(S.lname)}</div>
+          <div class="plan-doc-hdr-num">${cId}</div>
+        </div>
+        <div class="plan-doc-hdr-r">
+          <div class="plan-doc-hdr-clinic">${esc(CLINIC.name)}</div>
+          <div class="plan-doc-hdr-date">${dateStr}</div>
+        </div>
+      </div>
+      ${pa ? `
+      <div class="plan-section" style="background:var(--ac-l)">
+        <div class="plan-sec-lbl" style="color:var(--ac-m)">✦ AI visual assessment</div>
+        <p style="font-size:13px;color:var(--ac-d);line-height:1.65${pa.skinQualityScore ? ';margin-bottom:7px' : ''}">${esc(pa.visualObservations || '')}</p>
+        ${pa.skinQualityScore ? `<div style="font-size:11px;font-weight:600;color:var(--ac-m);letter-spacing:.03em">SKIN QUALITY NOTED: ${esc(pa.skinQualityScore)}</div>` : ''}
+      </div>` : ''}
+      <div class="plan-section">
+        <div class="plan-sec-lbl">Clinical summary</div>
+        <p style="font-size:13px;color:var(--t2);line-height:1.7">${esc(d.analysis || '')}</p>
+      </div>
+      <div class="plan-section">
+        <div class="plan-sec-lbl">Recommended treatment plan</div>
+        ${mods.map((m, i) => `
+        <div class="treat-row">
+          <div class="treat-num">${i + 1}</div>
+          <div>
+            <div class="treat-name">${esc(m.name)}</div>
+            <div class="treat-why">${esc(m.why)}</div>
+            <div class="treat-long">⏱ ${esc(m.expectedLongevity)}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="plan-section">
+        <div class="plan-sec-lbl">Investment summary</div>
+        <div class="invest-pkg">${esc(d.estimatedInvestment?.package || '')}</div>
+        <div class="invest-desc">${esc(d.estimatedInvestment?.description || '')}</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:.8rem 1.2rem 1.2rem">
+    <button class="btn pri" onclick="openChat()" style="margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span>💬</span> Chat with your AI Guide
+    </button>
+    <button class="btn gho" onclick="window.open('${CLINIC.bookingUrl}','_blank')">
+      Book my consultation at ${esc(CLINIC.name)} →
+    </button>
+    <div class="disc" style="margin-top:.8rem">This tool does not provide medical advice. Photo analysis is non-diagnostic. All recommendations are subject to in-person clinical evaluation by a licensed provider. Individual results vary.</div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+//  Chat widget
+// ─────────────────────────────────────────────
+function openChat() {
+  const b = $('body');
+  b.className = 'body anim';
+  b.style.padding = '0';
+  b.innerHTML = `
+  <div class="chat-hdr-bar">
+    <button class="chat-back" onclick="showResult(S.results)" title="Back to results">←</button>
+    <div class="chat-hdr-info">
+      <div class="chat-hdr-name">${esc(CLINIC.name)} AI Guide</div>
+      <div class="chat-hdr-sub">Based on your consultation · Online now</div>
+    </div>
+    <div class="chat-online"></div>
+  </div>
+  <div class="chat-msgs-area" id="cmsg"></div>
+  <div class="chat-footer-bar">
+    <textarea class="chat-inp" id="cinp" placeholder="Ask about treatments, pricing, or booking…" rows="1"
+      onkeydown="chatKey(event)"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+    <button class="chat-send" id="csend" onclick="sendChatMsg()">Send</button>
+  </div>
+  <div class="chat-legal">AI responses are informational only. Consult a licensed provider for medical advice.</div>`;
+  renderChatMsgs();
+  setTimeout(() => { const i = $('cinp'); if (i) i.focus(); }, 50);
+}
+
+function renderChatMsgs() {
+  const area = $('cmsg');
+  if (!area) return;
+  area.innerHTML = S.chatDisplay.map(m => `
+    <div class="chat-msg-row ${m.role}">
+      <div class="chat-bubble ${m.role}">
+        ${m.typing
+          ? '<div class="chat-typing"><span></span><span></span><span></span></div>'
+          : esc(m.text).replace(/\n/g, '<br>')}
+      </div>
+    </div>`).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+async function sendChatMsg() {
+  const inp = $('cinp');
+  const send = $('csend');
+  if (!inp || !send || send.disabled) return;
+  const text = inp.value.trim();
+  if (!text) return;
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  send.disabled = true;
+
+  S.chatMsgs.push({ role: 'user', content: text });
+  S.chatDisplay.push({ role: 'user', text });
+  S.chatDisplay.push({ role: 'ai', typing: true });
+  renderChatMsgs();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: S.chatMsgs, systemPrompt: S.chatSys }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const reply = data.content.filter(c => c.type === 'text').map(c => c.text).join('');
+    S.chatMsgs.push({ role: 'assistant', content: reply });
+    S.chatDisplay.pop();
+    S.chatDisplay.push({ role: 'ai', text: reply });
+  } catch {
+    S.chatDisplay.pop();
+    S.chatDisplay.push({ role: 'ai', text: "I'm sorry, I had a connection issue. Please try again." });
+  }
+
+  renderChatMsgs();
+  if ($('csend')) $('csend').disabled = false;
+  if ($('cinp')) $('cinp').focus();
+}
+
+function chatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMsg(); }
+}
+
+// ─────────────────────────────────────────────
+//  Error screen
+// ─────────────────────────────────────────────
+function showError(msg) {
+  const b = $('body');
+  b.className = 'body anim';
+  b.style.padding = '';
+  b.innerHTML = `
+    <div class="eye">Something went wrong</div>
+    <div class="ttl">Unable to generate results</div>
+    <div class="err-box"><strong>Error:</strong> ${esc(msg || 'Unknown error')}<br><br>Make sure the server is running and <code>ANTHROPIC_API_KEY</code> is set in your <code>.env</code> file.</div>
+    <button class="btn gho" onclick="go(5)">← Try again</button>`;
+}
+
+// Boot
+go(1);
+</script>
+</body>
+</html>
