@@ -337,7 +337,7 @@ app.post('/api/analyze', async (req, res) => {
   try {
     const { messages, maxTokens = 1000 } = req.body;
     const response = await claude.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       messages,
     });
@@ -387,7 +387,7 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { messages, systemPrompt } = req.body;
     const response = await claude.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: systemPrompt,
       messages,
