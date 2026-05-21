@@ -1,9 +1,18 @@
 const { Pool } = require('pg');
 const crypto = require('crypto');
 
+if (!process.env.DATABASE_URL) {
+  console.warn('WARNING: DATABASE_URL is not set. Add a PostgreSQL database in Railway.');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+});
+
+// Prevent unhandled error events from crashing the process
+pool.on('error', (err) => {
+  console.error('PostgreSQL pool error:', err.message);
 });
 
 async function init() {
