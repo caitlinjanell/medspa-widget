@@ -442,7 +442,16 @@ async function analyze() {
     ? `\nPhoto analysis (${photoEntries.length} image${photoEntries.length > 1 ? 's' : ''}):\n- Observations: ${pa.visualObservations}\n- Identified areas: ${(pa.photoInformedAreas || []).join(', ')}\n- Skin quality: ${pa.skinQualityScore || 'N/A'}\n`
     : '';
 
-  const prompt = `You are an expert aesthetic medical consultant. Generate personalized treatment recommendations based on this client's pre-consultation intake.\n\nClient profile:\n- Target areas: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Treatment history: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "2-sentence clinical summary validating their goals and explaining the underlying science${pa ? '. Integrate visual findings where relevant.' : ''}",\n  "recommendedModalities": [\n    {"name":"treatment name","why":"1-2 sentence rationale","expectedLongevity":"duration"}\n  ],\n  "estimatedInvestment": {"package":"Package Name","description":"1-2 sentence cost framing"}\n}\nTone: clinical, reassuring, high-end. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with'. Recommend 2-4 modalities.`;
+  const availTx = (CLINIC.treatments || []).filter(t => t.name);
+  const txListStr = availTx.length
+    ? `\nAvailable treatments at ${CLINIC.name} (you MUST only recommend from this list — use the exact names as given):\n${availTx.map(t => `- ${t.name}${t.price ? ` — ${t.price}` : ''}`).join('\n')}\n`
+    : '';
+  const investSchema = availTx.length ? '' : `,\n  "estimatedInvestment": {"package":"Package Name","description":"1-2 sentence cost framing"}`;
+  const txInstruction = availTx.length
+    ? `Recommend 2-4 treatments from the list above only. Use the exact treatment names provided.`
+    : `Recommend 2-4 modalities.`;
+
+  const prompt = `You are an expert aesthetic medical consultant. Generate personalized treatment recommendations based on this client's pre-consultation intake.\n\nClient profile:\n- Target areas: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Treatment history: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "2-sentence clinical summary validating their goals and explaining the underlying science${pa ? '. Integrate visual findings where relevant.' : ''}",\n  "recommendedModalities": [\n    {"name":"exact treatment name from list","why":"1-2 sentence rationale","expectedLongevity":"duration"}\n  ]${investSchema}\n}\nTone: clinical, reassuring, high-end. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with'. ${txInstruction}`;
 
   try {
     const d = await callAPI([{ role: 'user', content: prompt }], 1000);
@@ -485,6 +494,11 @@ function showResult(d) {
   S.results = d;
   saveLead(d);
 
+  // Build price lookup from practice's configured treatments
+  const txPriceMap = {};
+  (CLINIC.treatments || []).forEach(t => { if (t.name) txPriceMap[t.name.toLowerCase()] = t.price || ''; });
+  const txPrice = name => txPriceMap[name.toLowerCase()] || txPriceMap[Object.keys(txPriceMap).find(k => name.toLowerCase().includes(k) || k.includes(name.toLowerCase())) || ''] || '';
+
   // Build VA system prompt
   const mods = d.recommendedModalities || [];
   S.chatSys = `You are the AI aesthetic consultant for ${CLINIC.name}, a premium medical aesthetics practice. You have just completed a pre-consultation with ${S.fname} ${S.lname} and generated their personalized treatment plan.
@@ -500,9 +514,8 @@ ${S.pa ? `- Visual assessment: ${S.pa.visualObservations} (Skin quality: ${S.pa.
 Clinical summary: ${d.analysis || ''}
 
 Recommended treatments:
-${mods.map((m, i) => `${i + 1}. ${m.name}: ${m.why} (Typical longevity: ${m.expectedLongevity})`).join('\n')}
-
-Investment package: ${d.estimatedInvestment?.package || ''} — ${d.estimatedInvestment?.description || ''}
+${mods.map((m, i) => { const p = txPrice(m.name); return `${i + 1}. ${m.name}${p ? ` (${p})` : ''}: ${m.why} (Typical longevity: ${m.expectedLongevity})`; }).join('\n')}
+${d.estimatedInvestment ? `\nInvestment package: ${d.estimatedInvestment.package || ''} — ${d.estimatedInvestment.description || ''}` : ''}
 
 Your role as ${CLINIC.name}'s AI Guide:
 - Answer questions about their recommended treatments warmly and knowledgeably
@@ -556,21 +569,25 @@ Your role as ${CLINIC.name}'s AI Guide:
       </div>
       <div class="plan-section">
         <div class="plan-sec-lbl">Recommended treatment plan</div>
-        ${mods.map((m, i) => `
+        ${mods.map((m, i) => { const p = txPrice(m.name); return `
         <div class="treat-row">
           <div class="treat-num">${i + 1}</div>
-          <div>
-            <div class="treat-name">${esc(m.name)}</div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+              <div class="treat-name">${esc(m.name)}</div>
+              ${p ? `<div style="font-size:13px;font-weight:700;color:var(--ac-d);white-space:nowrap">${esc(p)}</div>` : ''}
+            </div>
             <div class="treat-why">${esc(m.why)}</div>
             <div class="treat-long">⏱ ${esc(m.expectedLongevity)}</div>
           </div>
-        </div>`).join('')}
+        </div>`; }).join('')}
       </div>
+      ${d.estimatedInvestment ? `
       <div class="plan-section">
         <div class="plan-sec-lbl">Investment summary</div>
-        <div class="invest-pkg">${esc(d.estimatedInvestment?.package || '')}</div>
-        <div class="invest-desc">${esc(d.estimatedInvestment?.description || '')}</div>
-      </div>
+        <div class="invest-pkg">${esc(d.estimatedInvestment.package || '')}</div>
+        <div class="invest-desc">${esc(d.estimatedInvestment.description || '')}</div>
+      </div>` : ''}
     </div>
   </div>
   <div style="padding:.8rem 1.2rem 1.2rem">
