@@ -190,11 +190,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <div class="toast" id="toast"></div>
 
 <script>
+window.onerror = function(msg, src, line) {
+  const el = document.getElementById('main-content');
+  if (el) el.innerHTML = `<div style="padding:2rem;color:#c0392b;font-size:13px"><strong>JS error:</strong> ${msg} (${src}:${line})</div>`;
+};
+
 // ── Auth guard ──
 const token = localStorage.getItem('aiToken');
 if (!token) window.location.href = '/login';
 
-let provider = JSON.parse(localStorage.getItem('aiProvider') || '{}');
+let provider = {};
+try { provider = JSON.parse(localStorage.getItem('aiProvider') || '{}'); } catch(e) { localStorage.removeItem('aiProvider'); }
 let widgets = [];
 let leads = [];
 let activeWidgetId = null;
