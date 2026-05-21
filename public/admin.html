@@ -130,6 +130,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
     </div>
 
     <div class="leads-grid" id="leads-list"></div>
+
+    <div style="margin-top:2.5rem">
+      <div class="dash-title" style="font-size:20px;margin-bottom:1rem">⭐ Testimonials</div>
+      <div id="testi-list" style="display:flex;flex-direction:column;gap:.75rem"></div>
+    </div>
   </div>
 </div>
 
@@ -155,6 +160,7 @@ async function login() {
     $('dashboard').style.display = '';
     renderStats();
     renderLeads();
+    loadTestimonials();
   } catch {
     $('login-err').textContent = 'Incorrect password. Please try again.';
     $('pw').focus();
@@ -343,6 +349,36 @@ function exportCSV() {
   a.download = `leads-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+async function loadTestimonials() {
+  try {
+    const res = await fetch('/api/admin/testimonials?password=' + encodeURIComponent(SESSION_PW));
+    const list = await res.json();
+    $('testi-list').innerHTML = list.length ? list.map(t => `
+      <div style="background:#fff;border-radius:12px;border:0.5px solid var(--border);padding:1rem 1.2rem;display:flex;gap:1rem;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-size:13px;font-style:italic;color:var(--t2);line-height:1.65;margin-bottom:.5rem">"${esc(t.content)}"</div>
+          <div style="font-size:13px;font-weight:600;color:var(--t1)">${esc(t.author_name)}</div>
+          <div style="font-size:12px;color:var(--t3)">${esc(t.author_role||'')}${t.author_role?' · ':''}${esc(t.clinic_name)} · ${esc(t.provider_email)}</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-shrink:0;flex-direction:column">
+          ${t.approved ? `<span style="font-size:12px;color:#15803d;font-weight:600">✅ Live</span>` : `<button class="btn-sm" onclick="approveTestimonial('${t.id}')">Approve</button>`}
+          <button class="btn-sm danger" onclick="deleteTestimonial('${t.id}')">Delete</button>
+        </div>
+      </div>`).join('') : '<div style="color:var(--t3);font-size:13px">No testimonials yet.</div>';
+  } catch {}
+}
+
+async function approveTestimonial(id) {
+  await fetch('/api/admin/testimonials/' + id + '/approve?password=' + encodeURIComponent(SESSION_PW), { method: 'POST' });
+  loadTestimonials();
+}
+
+async function deleteTestimonial(id) {
+  if (!confirm('Delete this testimonial?')) return;
+  await fetch('/api/admin/testimonials/' + id + '?password=' + encodeURIComponent(SESSION_PW), { method: 'DELETE' });
+  loadTestimonials();
 }
 
 // Auto-restore session if password saved in sessionStorage

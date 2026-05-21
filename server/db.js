@@ -55,6 +55,16 @@ async function init() {
 
 async function migrate() {
   await pool.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS photos TEXT DEFAULT '{}'`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS testimonials (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL REFERENCES providers(id),
+    clinic_name TEXT NOT NULL,
+    author_name TEXT NOT NULL,
+    author_role TEXT,
+    content TEXT NOT NULL,
+    approved INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL
+  )`);
 }
 
 init()
@@ -213,6 +223,40 @@ module.exports = {
   async getLeadsByProvider(providerId) {
     const { rows } = await pool.query('SELECT * FROM leads WHERE provider_id = $1 ORDER BY captured_at DESC', [providerId]);
     return rows.map(parseLead);
+  },
+
+  async submitTestimonial(providerId, { clinicName, authorName, authorRole, content }) {
+    const id = newId();
+    const now = new Date().toISOString();
+    await pool.query(
+      'INSERT INTO testimonials (id, provider_id, clinic_name, author_name, author_role, content, approved, created_at) VALUES ($1,$2,$3,$4,$5,$6,0,$7)',
+      [id, providerId, clinicName, authorName, authorRole || '', content, now]
+    );
+    const { rows } = await pool.query('SELECT * FROM testimonials WHERE id = $1', [id]);
+    return rows[0];
+  },
+
+  async getApprovedTestimonials() {
+    const { rows } = await pool.query('SELECT * FROM testimonials WHERE approved = 1 ORDER BY created_at DESC');
+    return rows;
+  },
+
+  async getAllTestimonials() {
+    const { rows } = await pool.query('SELECT t.*, p.email as provider_email FROM testimonials t JOIN providers p ON t.provider_id = p.id ORDER BY t.created_at DESC');
+    return rows;
+  },
+
+  async approveTestimonial(id) {
+    await pool.query('UPDATE testimonials SET approved = 1 WHERE id = $1', [id]);
+  },
+
+  async deleteTestimonial(id) {
+    await pool.query('DELETE FROM testimonials WHERE id = $1', [id]);
+  },
+
+  async getProviderTestimonial(providerId) {
+    const { rows } = await pool.query('SELECT * FROM testimonials WHERE provider_id = $1 ORDER BY created_at DESC LIMIT 1', [providerId]);
+    return rows[0] || null;
   },
 
   async getLeadsByWidget(widgetCode) {

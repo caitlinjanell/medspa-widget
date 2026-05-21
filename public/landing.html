@@ -398,49 +398,53 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
 </section>
 
 <!-- Testimonials -->
-<section class="testi">
+<section class="testi" id="testi-section">
   <div class="container">
     <div style="text-align:center">
       <div class="section-tag">Testimonials</div>
       <h2 class="section-title">Practices love Hey, Maeve!</h2>
     </div>
-    <div class="testi-grid">
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <div class="testi-text">"We went from a 12% website conversion rate to over 30% in the first month. Clients come in already knowing exactly what they want — it's transformed our consultations."</div>
-        <div class="testi-author">
-          <div class="testi-avatar">SK</div>
-          <div>
-            <div class="testi-name">Dr. Sarah Kim</div>
-            <div class="testi-role">Park Avenue Aesthetics, NYC</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <div class="testi-text">"The AI recommendations are genuinely impressive. Our clients trust the analysis because it's personalized to their photos and goals — not a generic brochure."</div>
-        <div class="testi-author">
-          <div class="testi-avatar">LT</div>
-          <div>
-            <div class="testi-name">Lisa Torres, NP</div>
-            <div class="testi-role">Radiance MedSpa, Miami</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <div class="testi-text">"Setup took less than 10 minutes. Now we're capturing qualified leads at 2am when no one is in the office. It paid for itself in the first week."</div>
-        <div class="testi-author">
-          <div class="testi-avatar">MC</div>
-          <div>
-            <div class="testi-name">Dr. Michael Chen</div>
-            <div class="testi-role">The Aesthetic Studio, LA</div>
-          </div>
-        </div>
-      </div>
+    <div class="testi-grid" id="testi-grid">
+      <!-- populated by JS -->
     </div>
   </div>
 </section>
+<script>
+(async () => {
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function initials(name) { return (name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase(); }
+  function card(text, name, role) {
+    return `<div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"${esc(text)}"</div>
+      <div class="testi-author">
+        <div class="testi-avatar">${esc(initials(name))}</div>
+        <div>
+          <div class="testi-name">${esc(name)}</div>
+          <div class="testi-role">${esc(role)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const placeholders = [
+    { content: "We went from a 12% website conversion rate to over 30% in the first month. Clients come in already knowing exactly what they want — it's transformed our consultations.", author_name: "Dr. Sarah Kim", author_role: "Park Avenue Aesthetics, NYC" },
+    { content: "The AI recommendations are genuinely impressive. Our clients trust the analysis because it's personalized to their photos and goals — not a generic brochure.", author_name: "Lisa Torres, NP", author_role: "Radiance MedSpa, Miami" },
+    { content: "Setup took less than 10 minutes. Now we're capturing qualified leads at 2am when no one is in the office. It paid for itself in the first week.", author_name: "Dr. Michael Chen", author_role: "The Aesthetic Studio, LA" },
+  ];
+
+  try {
+    const res = await fetch('/api/testimonials');
+    const data = await res.json();
+    const list = Array.isArray(data) && data.length >= 1 ? data : placeholders;
+    document.getElementById('testi-grid').innerHTML = list.slice(0, 6).map(t =>
+      card(t.content, t.author_name, (t.author_role ? t.author_role + ' · ' : '') + (t.clinic_name || t.author_role || ''))
+    ).join('');
+  } catch {
+    document.getElementById('testi-grid').innerHTML = placeholders.map(t => card(t.content, t.author_name, t.author_role)).join('');
+  }
+})();
+</script>
 
 <!-- Final CTA -->
 <section class="cta-section">

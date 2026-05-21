@@ -418,6 +418,56 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // ══════════════════════════════════════
+//  Testimonials
+// ══════════════════════════════════════
+app.get('/api/testimonials', async (req, res) => {
+  res.json(await db.getApprovedTestimonials());
+});
+
+app.post('/api/provider/testimonial', requireAuth, async (req, res) => {
+  try {
+    const { authorName, authorRole, content } = req.body;
+    if (!authorName || !content) return res.status(400).json({ error: 'Name and content required' });
+    if (content.length > 500) return res.status(400).json({ error: 'Testimonial must be under 500 characters' });
+    const provider = await db.getProviderById(req.provider.id);
+    const t = await db.submitTestimonial(req.provider.id, {
+      clinicName: provider.clinic_name,
+      authorName,
+      authorRole: authorRole || '',
+      content,
+    });
+    res.json(t);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/provider/testimonial', requireAuth, async (req, res) => {
+  res.json(await db.getProviderTestimonial(req.provider.id));
+});
+
+// Admin testimonial management
+app.get('/api/admin/testimonials', async (req, res) => {
+  const pw = process.env.ADMIN_PASSWORD || 'admin123';
+  if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
+  res.json(await db.getAllTestimonials());
+});
+
+app.post('/api/admin/testimonials/:id/approve', async (req, res) => {
+  const pw = process.env.ADMIN_PASSWORD || 'admin123';
+  if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
+  await db.approveTestimonial(req.params.id);
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/testimonials/:id', async (req, res) => {
+  const pw = process.env.ADMIN_PASSWORD || 'admin123';
+  if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
+  await db.deleteTestimonial(req.params.id);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════
 //  Legacy super-admin (kept for compatibility)
 // ══════════════════════════════════════
 app.get('/api/admin/leads', (req, res) => {

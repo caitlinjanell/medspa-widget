@@ -169,6 +169,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <button class="sb-item" onclick="showTab('billing')" id="tab-billing">
       <span class="ico">💳</span> Billing
     </button>
+    <button class="sb-item" onclick="showTab('testimonial')" id="tab-testimonial">
+      <span class="ico">⭐</span> Leave a Review
+    </button>
     <div class="sb-bottom">
       <div class="sb-user">
         <strong id="sb-clinic">—</strong>
@@ -246,7 +249,7 @@ function showTab(name) {
   const tabEl = document.getElementById('tab-' + name);
   if (tabEl) tabEl.classList.add('active');
   const m = document.getElementById('main-content');
-  const renders = { overview: renderOverview, widget: renderWidget, routing: renderRouting, leads: renderLeads, embed: renderEmbed, billing: renderBilling };
+  const renders = { overview: renderOverview, widget: renderWidget, routing: renderRouting, leads: renderLeads, embed: renderEmbed, billing: renderBilling, testimonial: renderTestimonial };
   if (renders[name]) renders[name](m);
 }
 
@@ -938,6 +941,56 @@ async function openPortal() {
   } catch {
     toast('Could not connect to billing');
   }
+}
+
+// ══════════════════════════════════════
+//  TESTIMONIAL
+// ══════════════════════════════════════
+async function renderTestimonial(m) {
+  const existing = await api('GET', '/api/provider/testimonial');
+  if (existing && !existing.error) {
+    const status = existing.approved ? '✅ Approved — visible on heymaeve.com' : '⏳ Pending review — we'll approve it shortly';
+    m.innerHTML = `
+    <div class="page-hdr">
+      <div class="page-title">Your Review</div>
+      <div class="page-sub">Thank you for sharing your experience with Hey, Maeve!</div>
+    </div>
+    <div class="card" style="max-width:560px">
+      <div style="font-size:13px;font-weight:600;color:var(--ac-m);margin-bottom:.75rem">${status}</div>
+      <div style="font-size:14px;color:var(--t2);font-style:italic;line-height:1.7;margin-bottom:1rem">"${esc(existing.content)}"</div>
+      <div style="font-size:13px;font-weight:600;color:var(--t1)">${esc(existing.author_name)}</div>
+      <div style="font-size:12px;color:var(--t3)">${esc(existing.author_role || '')}${existing.author_role ? ' · ' : ''}${esc(existing.clinic_name)}</div>
+    </div>`;
+    return;
+  }
+
+  m.innerHTML = `
+  <div class="page-hdr">
+    <div class="page-title">Leave a Review</div>
+    <div class="page-sub">Love Hey, Maeve? Share your experience — approved reviews appear on our website.</div>
+  </div>
+  <div class="card" style="max-width:560px">
+    <div id="testi-err" style="display:none;font-size:13px;color:#c0392b;background:#fff5f5;border-radius:8px;padding:10px 13px;margin-bottom:12px"></div>
+    <label class="flbl">Your name</label>
+    <input class="finp" id="t-name" placeholder="Dr. Jane Smith" style="margin-bottom:12px">
+    <label class="flbl">Your title / role <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
+    <input class="finp" id="t-role" placeholder="e.g. Owner, Nurse Injector, Medical Director" style="margin-bottom:12px">
+    <label class="flbl">Your review <span style="font-weight:400;color:var(--t3)" id="t-count">(0 / 500)</span></label>
+    <textarea class="finp" id="t-content" rows="5" placeholder="Tell us how Hey, Maeve! has helped your practice…" oninput="document.getElementById('t-count').textContent='('+this.value.length+' / 500)'" style="resize:vertical;margin-bottom:16px"></textarea>
+    <button class="btn-pri" onclick="submitTestimonial()">Submit review →</button>
+  </div>`;
+}
+
+async function submitTestimonial() {
+  const name    = document.getElementById('t-name')?.value.trim();
+  const role    = document.getElementById('t-role')?.value.trim();
+  const content = document.getElementById('t-content')?.value.trim();
+  const errEl   = document.getElementById('testi-err');
+  if (!name || !content) { errEl.textContent = 'Please fill in your name and review.'; errEl.style.display = 'block'; return; }
+  const res = await api('POST', '/api/provider/testimonial', { authorName: name, authorRole: role, content });
+  if (res?.error) { errEl.textContent = res.error; errEl.style.display = 'block'; return; }
+  toast('Review submitted! We'll approve it shortly ✓');
+  showTab('testimonial');
 }
 
 // Handle post-payment redirect
