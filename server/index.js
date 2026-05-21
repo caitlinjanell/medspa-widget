@@ -205,6 +205,7 @@ app.get('/admin',     (req, res) => res.sendFile(path.join(__dirname, '../public
 app.get('/signup',    (req, res) => res.sendFile(path.join(__dirname, '../public/signup.html')));
 app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, '../public/login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../public/dashboard.html')));
+app.get('/logout',    (req, res) => res.sendFile(path.join(__dirname, '../public/logout.html')));
 
 app.use(express.static(path.join(__dirname, '../public')));
 
