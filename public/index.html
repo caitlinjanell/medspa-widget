@@ -360,7 +360,7 @@ const STEPS = {
     <div class="sub">At least one photo required. All four gives the best results.</div>
     <div class="ibox">
       <span style="font-size:15px;margin-top:1px">🔒</span>
-      <span class="ibox-t">Photos are processed in-session only and never stored or shared.</span>
+      <span class="ibox-t">Your photos are encrypted and stored securely. They are accessible only to ${CLINIC.name}'s licensed medical providers as part of your pre-consultation record, and will not be used for any other purpose.</span>
     </div>
     <div class="pgrid">
       ${SLOTS.map(sl => `
@@ -475,12 +475,11 @@ async function analyze() {
   const txListStr = availTx.length
     ? `\nAvailable treatments at ${CLINIC.name} (you MUST only recommend from this list — use the exact names as given):\n${availTx.map(t => `- ${t.name}${t.price ? ` — ${t.price}` : ''}`).join('\n')}\n`
     : '';
-  const investSchema = availTx.length ? '' : `,\n  "estimatedInvestment": {"package":"Package Name","description":"1-2 sentence cost framing"}`;
   const txInstruction = availTx.length
     ? `Recommend 2-4 treatments from the list above only. Use the exact treatment names provided.`
     : `Recommend 2-4 modalities.`;
 
-  const prompt = `You are an expert aesthetic medical consultant. Generate personalized treatment recommendations based on this client's pre-consultation intake.\n\nClient profile:\n- Target areas: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Treatment history: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "2-sentence clinical summary validating their goals and explaining the underlying science${pa ? '. Integrate visual findings where relevant.' : ''}",\n  "recommendedModalities": [\n    {"name":"exact treatment name from list","why":"1-2 sentence rationale","expectedLongevity":"duration"}\n  ]${investSchema}\n}\nTone: clinical, reassuring, high-end. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with'. ${txInstruction}`;
+  const prompt = `You are an expert aesthetic medical consultant conducting a full facial assessment and pre-consultation for a prospective patient.\n\nClient profile:\n- Areas of interest: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Treatment history: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "3-4 sentence full facial assessment — acknowledge the client's goals, describe the underlying anatomical considerations (e.g. volume, laxity, texture), explain how the recommended approach addresses these, and set realistic expectations. ${pa ? 'Integrate visual findings.' : ''}",\n  "recommendedModalities": [\n    {\n      "name": "exact treatment name",\n      "why": "1-2 sentence clinical rationale specific to this client",\n      "expectedLongevity": "typical duration",\n      "estimatedCost": "patient-specific cost estimate accounting for typical units/syringes/sessions needed (e.g. $480–$640, approx. 40 units)"\n    }\n  ],\n  "totalEstimate": {\n    "range": "combined low–high range across all recommended treatments (e.g. $2,400–$3,800)",\n    "note": "1 sentence framing the investment in context of outcomes and longevity"\n  }\n}\nTone: clinical, warm, high-end. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with'. ${txInstruction}`;
 
   try {
     const d = await callAPI([{ role: 'user', content: prompt }], 1000);
@@ -544,8 +543,10 @@ ${S.pa ? `- Visual assessment: ${S.pa.visualObservations} (Skin quality: ${S.pa.
 Clinical summary: ${d.analysis || ''}
 
 Recommended treatments:
-${mods.map((m, i) => { const p = txPrice(m.name); return `${i + 1}. ${m.name}${p ? ` (${p})` : ''}: ${m.why} (Typical longevity: ${m.expectedLongevity})`; }).join('\n')}
-${d.estimatedInvestment ? `\nInvestment package: ${d.estimatedInvestment.package || ''} — ${d.estimatedInvestment.description || ''}` : ''}
+${mods.map((m, i) => { const p = m.estimatedCost || txPrice(m.name); return `${i + 1}. ${m.name}${p ? ` (${p})` : ''}: ${m.why} (Typical longevity: ${m.expectedLongevity})`; }).join('\n')}
+
+Estimated total investment: ${d.totalEstimate?.range || ''}
+${d.totalEstimate?.note || ''}
 
 Your role as Maeve, ${CLINIC.name}'s AI consultant:
 - Answer questions about their recommended treatments warmly and knowledgeably
@@ -599,25 +600,25 @@ Your role as Maeve, ${CLINIC.name}'s AI consultant:
       </div>
       <div class="plan-section">
         <div class="plan-sec-lbl">Recommended treatment plan</div>
-        ${mods.map((m, i) => { const p = txPrice(m.name); return `
+        ${mods.map((m, i) => { const listPrice = txPrice(m.name); return `
         <div class="treat-row">
           <div class="treat-num">${i + 1}</div>
           <div style="flex:1">
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
               <div class="treat-name">${esc(m.name)}</div>
-              ${p ? `<div style="font-size:13px;font-weight:700;color:var(--ac-d);white-space:nowrap">${esc(p)}</div>` : ''}
+              ${m.estimatedCost ? `<div style="font-size:13px;font-weight:700;color:var(--ac-d);white-space:nowrap">${esc(m.estimatedCost)}</div>` : listPrice ? `<div style="font-size:13px;font-weight:700;color:var(--ac-d);white-space:nowrap">${esc(listPrice)}</div>` : ''}
             </div>
             <div class="treat-why">${esc(m.why)}</div>
             <div class="treat-long">⏱ ${esc(m.expectedLongevity)}</div>
           </div>
         </div>`; }).join('')}
       </div>
-      ${d.estimatedInvestment ? `
-      <div class="plan-section">
-        <div class="plan-sec-lbl">Investment summary</div>
-        <div class="invest-pkg">${esc(d.estimatedInvestment.package || '')}</div>
-        <div class="invest-desc">${esc(d.estimatedInvestment.description || '')}</div>
-      </div>` : ''}
+      <div class="plan-section" style="background:var(--ac-l);border-radius:10px;padding:14px 16px">
+        <div class="plan-sec-lbl" style="color:var(--ac-m)">Estimated total investment</div>
+        <div style="font-size:22px;font-weight:700;color:var(--ac-d);margin:.3rem 0">${esc(d.totalEstimate?.range || d.estimatedInvestment?.package || '')}</div>
+        <div style="font-size:12px;color:var(--ac-m);line-height:1.6">${esc(d.totalEstimate?.note || d.estimatedInvestment?.description || '')}</div>
+        <div style="font-size:11px;color:var(--ac-m);margin-top:6px;opacity:.8">Estimates are based on typical treatment protocols. Final pricing is determined at your in-person consultation.</div>
+      </div>
     </div>
   </div>
   <div style="padding:.8rem 1.2rem 1.2rem">
