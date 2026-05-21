@@ -12,7 +12,10 @@ const db = require('./db');
 const stripe = process.env.STRIPE_SECRET_KEY ? Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
-const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
+if (!apiKey) console.error('ERROR: ANTHROPIC_API_KEY is not set');
+else console.log('Anthropic key loaded, length:', apiKey.length, 'prefix:', apiKey.slice(0, 10));
+const claude = new Anthropic({ apiKey });
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 
 app.use(cors());
@@ -343,7 +346,7 @@ app.post('/api/analyze', async (req, res) => {
     });
     res.json(response);
   } catch (err) {
-    console.error('Anthropic API error:', err.message);
+    console.error('Anthropic API error:', err.message, err.status, err.error);
     res.status(500).json({ error: err.message });
   }
 });
