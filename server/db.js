@@ -1,58 +1,49 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const { Pool } = require('pg');
 const crypto = require('crypto');
 
-const DATA_DIR = path.join(__dirname, '../data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+});
 
-const db = new Database(path.join(DATA_DIR, 'medspa.db'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+async function init() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS providers (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      clinic_name TEXT NOT NULL,
+      plan TEXT DEFAULT 'trial',
+      stripe_customer_id TEXT,
+      stripe_subscription_id TEXT,
+      subscription_status TEXT DEFAULT 'trialing',
+      trial_ends_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS widgets (
+      id TEXT PRIMARY KEY,
+      provider_id TEXT NOT NULL REFERENCES providers(id),
+      code TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL DEFAULT 'Primary Widget',
+      config TEXT NOT NULL DEFAULT '{}',
+      routing_type TEXT DEFAULT 'none',
+      routing_config TEXT DEFAULT '{}',
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS leads (
+      id TEXT PRIMARY KEY,
+      provider_id TEXT NOT NULL,
+      widget_code TEXT NOT NULL,
+      fname TEXT, lname TEXT, email TEXT, phone TEXT,
+      areas TEXT, concerns TEXT, history TEXT, budget TEXT,
+      analysis TEXT, modalities TEXT, package TEXT,
+      has_photos INTEGER DEFAULT 0, skin_quality TEXT,
+      captured_at TEXT NOT NULL
+    );
+  `);
+}
 
-// Migrate existing tables to add new columns safely
-const migrate = (sql) => { try { db.exec(sql); } catch {} };
-migrate('ALTER TABLE providers ADD COLUMN stripe_customer_id TEXT');
-migrate('ALTER TABLE providers ADD COLUMN stripe_subscription_id TEXT');
-migrate('ALTER TABLE providers ADD COLUMN subscription_status TEXT DEFAULT "trialing"');
-migrate('ALTER TABLE providers ADD COLUMN trial_ends_at TEXT');
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS providers (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    clinic_name TEXT NOT NULL,
-    plan TEXT DEFAULT 'trial',
-    stripe_customer_id TEXT,
-    stripe_subscription_id TEXT,
-    subscription_status TEXT DEFAULT 'trialing',
-    trial_ends_at TEXT,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS widgets (
-    id TEXT PRIMARY KEY,
-    provider_id TEXT NOT NULL REFERENCES providers(id),
-    code TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL DEFAULT 'Primary Widget',
-    config TEXT NOT NULL DEFAULT '{}',
-    routing_type TEXT DEFAULT 'none',
-    routing_config TEXT DEFAULT '{}',
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS leads (
-    id TEXT PRIMARY KEY,
-    provider_id TEXT NOT NULL,
-    widget_code TEXT NOT NULL,
-    fname TEXT, lname TEXT, email TEXT, phone TEXT,
-    areas TEXT, concerns TEXT, history TEXT, budget TEXT,
-    analysis TEXT, modalities TEXT, package TEXT,
-    has_photos INTEGER DEFAULT 0, skin_quality TEXT,
-    captured_at TEXT NOT NULL
-  );
-`);
+init().catch(err => console.error('DB init error:', err.message));
 
 function newId() { return crypto.randomUUID(); }
 
@@ -93,104 +84,121 @@ function parseLead(l) {
 }
 
 module.exports = {
-  // ── Providers ──
-  createProvider(email, passwordHash, clinicName) {
+  async createProvider(email, passwordHash, clinicName) {
     const id = newId();
     const now = new Date().toISOString();
     const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-    db.prepare('INSERT INTO providers (id, email, password_hash, clinic_name, plan, subscription_status, trial_ends_at, created_at) VALUES (?,?,?,?,?,?,?,?)')
-      .run(id, email.toLowerCase().trim(), passwordHash, clinicName, 'trial', 'trialing', trialEnd, now);
-    // auto-create first widget
+    await pool.query(
+      'INSERT INTO providers (id, email, password_hash, clinic_name, plan, subscription_status, trial_ends_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [id, email.toLowerCase().trim(), passwordHash, clinicName, 'trial', 'trialing', trialEnd, now]
+    );
     const wid = newId();
     const code = newId();
-    db.prepare('INSERT INTO widgets (id, provider_id, code, name, config, created_at) VALUES (?,?,?,?,?,?)')
-      .run(wid, id, code, 'Primary Widget', JSON.stringify(defaultConfig(clinicName)), now);
+    await pool.query(
+      'INSERT INTO widgets (id, provider_id, code, name, config, created_at) VALUES ($1,$2,$3,$4,$5,$6)',
+      [wid, id, code, 'Primary Widget', JSON.stringify(defaultConfig(clinicName)), now]
+    );
     return { id, email, clinicName };
   },
 
-  getProviderByEmail(email) {
-    return db.prepare('SELECT * FROM providers WHERE email = ?').get(email.toLowerCase().trim());
+  async getProviderByEmail(email) {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE email = $1', [email.toLowerCase().trim()]);
+    return rows[0] || null;
   },
 
-  getProviderById(id) {
-    return db.prepare('SELECT id, email, clinic_name, plan, stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at, created_at FROM providers WHERE id = ?').get(id);
+  async getProviderById(id) {
+    const { rows } = await pool.query(
+      'SELECT id, email, clinic_name, plan, stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at, created_at FROM providers WHERE id = $1',
+      [id]
+    );
+    return rows[0] || null;
   },
 
-  getProviderByStripeCustomer(customerId) {
-    return db.prepare('SELECT * FROM providers WHERE stripe_customer_id = ?').get(customerId);
+  async getProviderByStripeCustomer(customerId) {
+    const { rows } = await pool.query('SELECT * FROM providers WHERE stripe_customer_id = $1', [customerId]);
+    return rows[0] || null;
   },
 
-  updateProviderBilling(id, { stripeCustomerId, stripeSubscriptionId, subscriptionStatus, plan }) {
+  async updateProviderBilling(id, { stripeCustomerId, stripeSubscriptionId, subscriptionStatus, plan }) {
     const fields = []; const vals = [];
-    if (stripeCustomerId      !== undefined) { fields.push('stripe_customer_id = ?');      vals.push(stripeCustomerId); }
-    if (stripeSubscriptionId  !== undefined) { fields.push('stripe_subscription_id = ?');  vals.push(stripeSubscriptionId); }
-    if (subscriptionStatus    !== undefined) { fields.push('subscription_status = ?');      vals.push(subscriptionStatus); }
-    if (plan                  !== undefined) { fields.push('plan = ?');                     vals.push(plan); }
+    let i = 1;
+    if (stripeCustomerId      !== undefined) { fields.push(`stripe_customer_id = $${i++}`);     vals.push(stripeCustomerId); }
+    if (stripeSubscriptionId  !== undefined) { fields.push(`stripe_subscription_id = $${i++}`); vals.push(stripeSubscriptionId); }
+    if (subscriptionStatus    !== undefined) { fields.push(`subscription_status = $${i++}`);    vals.push(subscriptionStatus); }
+    if (plan                  !== undefined) { fields.push(`plan = $${i++}`);                   vals.push(plan); }
     if (!fields.length) return;
     vals.push(id);
-    db.prepare(`UPDATE providers SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+    await pool.query(`UPDATE providers SET ${fields.join(', ')} WHERE id = $${i}`, vals);
   },
 
-  // ── Widgets ──
-  getWidgetsByProvider(providerId) {
-    return db.prepare('SELECT * FROM widgets WHERE provider_id = ? ORDER BY created_at ASC').all(providerId).map(parseWidget);
+  async getWidgetsByProvider(providerId) {
+    const { rows } = await pool.query('SELECT * FROM widgets WHERE provider_id = $1 ORDER BY created_at ASC', [providerId]);
+    return rows.map(parseWidget);
   },
 
-  getWidgetByCode(code) {
-    return parseWidget(db.prepare('SELECT * FROM widgets WHERE code = ?').get(code));
+  async getWidgetByCode(code) {
+    const { rows } = await pool.query('SELECT * FROM widgets WHERE code = $1', [code]);
+    return parseWidget(rows[0] || null);
   },
 
-  getWidgetById(id) {
-    return parseWidget(db.prepare('SELECT * FROM widgets WHERE id = ?').get(id));
+  async getWidgetById(id) {
+    const { rows } = await pool.query('SELECT * FROM widgets WHERE id = $1', [id]);
+    return parseWidget(rows[0] || null);
   },
 
-  createWidget(providerId, clinicName, name) {
+  async createWidget(providerId, clinicName, name) {
     const id = newId();
     const code = newId();
     const now = new Date().toISOString();
-    db.prepare('INSERT INTO widgets (id, provider_id, code, name, config, created_at) VALUES (?,?,?,?,?,?)')
-      .run(id, providerId, code, name || 'New Widget', JSON.stringify(defaultConfig(clinicName)), now);
-    return parseWidget(db.prepare('SELECT * FROM widgets WHERE id = ?').get(id));
+    await pool.query(
+      'INSERT INTO widgets (id, provider_id, code, name, config, created_at) VALUES ($1,$2,$3,$4,$5,$6)',
+      [id, providerId, code, name || 'New Widget', JSON.stringify(defaultConfig(clinicName)), now]
+    );
+    const { rows } = await pool.query('SELECT * FROM widgets WHERE id = $1', [id]);
+    return parseWidget(rows[0]);
   },
 
-  updateWidget(id, providerId, updates) {
-    const fields = [];
-    const vals = [];
-    if (updates.name !== undefined)          { fields.push('name = ?');           vals.push(updates.name); }
-    if (updates.config !== undefined)        { fields.push('config = ?');          vals.push(JSON.stringify(updates.config)); }
-    if (updates.routingType !== undefined)   { fields.push('routing_type = ?');    vals.push(updates.routingType); }
-    if (updates.routingConfig !== undefined) { fields.push('routing_config = ?');  vals.push(JSON.stringify(updates.routingConfig)); }
+  async updateWidget(id, providerId, updates) {
+    const fields = []; const vals = [];
+    let i = 1;
+    if (updates.name !== undefined)          { fields.push(`name = $${i++}`);           vals.push(updates.name); }
+    if (updates.config !== undefined)        { fields.push(`config = $${i++}`);          vals.push(JSON.stringify(updates.config)); }
+    if (updates.routingType !== undefined)   { fields.push(`routing_type = $${i++}`);    vals.push(updates.routingType); }
+    if (updates.routingConfig !== undefined) { fields.push(`routing_config = $${i++}`);  vals.push(JSON.stringify(updates.routingConfig)); }
     if (!fields.length) return this.getWidgetById(id);
     vals.push(id, providerId);
-    db.prepare(`UPDATE widgets SET ${fields.join(', ')} WHERE id = ? AND provider_id = ?`).run(...vals);
+    await pool.query(`UPDATE widgets SET ${fields.join(', ')} WHERE id = $${i} AND provider_id = $${i + 1}`, vals);
     return this.getWidgetById(id);
   },
 
-  deleteWidget(id, providerId) {
-    db.prepare('DELETE FROM widgets WHERE id = ? AND provider_id = ?').run(id, providerId);
+  async deleteWidget(id, providerId) {
+    await pool.query('DELETE FROM widgets WHERE id = $1 AND provider_id = $2', [id, providerId]);
   },
 
-  // ── Leads ──
-  saveLead(lead) {
+  async saveLead(lead) {
     const id = newId();
     const now = new Date().toISOString();
-    db.prepare(`INSERT INTO leads
-      (id,provider_id,widget_code,fname,lname,email,phone,areas,concerns,history,budget,analysis,modalities,package,has_photos,skin_quality,captured_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(id, lead.providerId, lead.widgetCode,
-        lead.fname||'', lead.lname||'', lead.email||'', lead.phone||'',
-        JSON.stringify(lead.areas||[]), JSON.stringify(lead.concerns||[]),
-        lead.history||'', lead.budget||'', lead.analysis||'',
-        JSON.stringify(lead.modalities||[]), lead.package||'',
-        lead.hasPhotos ? 1 : 0, lead.skinQuality||'', now);
-    return parseLead(db.prepare('SELECT * FROM leads WHERE id = ?').get(id));
+    await pool.query(
+      `INSERT INTO leads (id,provider_id,widget_code,fname,lname,email,phone,areas,concerns,history,budget,analysis,modalities,package,has_photos,skin_quality,captured_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+      [id, lead.providerId, lead.widgetCode,
+       lead.fname||'', lead.lname||'', lead.email||'', lead.phone||'',
+       JSON.stringify(lead.areas||[]), JSON.stringify(lead.concerns||[]),
+       lead.history||'', lead.budget||'', lead.analysis||'',
+       JSON.stringify(lead.modalities||[]), lead.package||'',
+       lead.hasPhotos ? 1 : 0, lead.skinQuality||'', now]
+    );
+    const { rows } = await pool.query('SELECT * FROM leads WHERE id = $1', [id]);
+    return parseLead(rows[0]);
   },
 
-  getLeadsByProvider(providerId) {
-    return db.prepare('SELECT * FROM leads WHERE provider_id = ? ORDER BY captured_at DESC').all(providerId).map(parseLead);
+  async getLeadsByProvider(providerId) {
+    const { rows } = await pool.query('SELECT * FROM leads WHERE provider_id = $1 ORDER BY captured_at DESC', [providerId]);
+    return rows.map(parseLead);
   },
 
-  getLeadsByWidget(widgetCode) {
-    return db.prepare('SELECT * FROM leads WHERE widget_code = ? ORDER BY captured_at DESC').all(widgetCode).map(parseLead);
+  async getLeadsByWidget(widgetCode) {
+    const { rows } = await pool.query('SELECT * FROM leads WHERE widget_code = $1 ORDER BY captured_at DESC', [widgetCode]);
+    return rows.map(parseLead);
   },
 };

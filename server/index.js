@@ -51,7 +51,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
       }
       case 'customer.subscription.updated': {
         const sub = event.data.object;
-        const provider = db.getProviderByStripeCustomer(sub.customer);
+        const provider = await db.getProviderByStripeCustomer(sub.customer);
         if (!provider) break;
         const priceId = sub.items.data[0]?.price?.id;
         const plan = PLAN_PRICES[priceId] || provider.plan;
@@ -64,13 +64,13 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
-        const provider = db.getProviderByStripeCustomer(sub.customer);
+        const provider = await db.getProviderByStripeCustomer(sub.customer);
         if (provider) db.updateProviderBilling(provider.id, { subscriptionStatus: 'canceled', plan: 'free' });
         break;
       }
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
-        const provider = db.getProviderByStripeCustomer(invoice.customer);
+        const provider = await db.getProviderByStripeCustomer(invoice.customer);
         if (provider) db.updateProviderBilling(provider.id, { subscriptionStatus: 'past_due' });
         break;
       }
@@ -198,9 +198,9 @@ app.post('/api/auth/signup', async (req, res) => {
     const { email, password, clinicName } = req.body;
     if (!email || !password || !clinicName) return res.status(400).json({ error: 'All fields required' });
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    if (db.getProviderByEmail(email)) return res.status(409).json({ error: 'An account with this email already exists' });
+    if (await db.getProviderByEmail(email)) return res.status(409).json({ error: 'An account with this email already exists' });
     const hash = await bcrypt.hash(password, 12);
-    const provider = db.createProvider(email, hash, clinicName);
+    const provider = await db.createProvider(email, hash, clinicName);
     const token = jwt.sign({ id: provider.id, email: provider.email }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, provider: { id: provider.id, email: provider.email, clinicName: provider.clinicName } });
   } catch (err) {
@@ -213,7 +213,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    const provider = db.getProviderByEmail(email);
+    const provider = await db.getProviderByEmail(email);
     if (!provider) return res.status(401).json({ error: 'Invalid email or password' });
     const ok = await bcrypt.compare(password, provider.password_hash);
     if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
@@ -224,10 +224,9 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me', requireAuth, (req, res) => {
-  const provider = db.getProviderById(req.provider.id);
+app.get('/api/auth/me', requireAuth, async (req, res) => {
+  const provider = await db.getProviderById(req.provider.id);
   if (!provider) return res.status(404).json({ error: 'Not found' });
-  // Compute trial days remaining
   let trialDaysLeft = 0;
   if (provider.subscription_status === 'trialing' && provider.trial_ends_at) {
     trialDaysLeft = Math.max(0, Math.ceil((new Date(provider.trial_ends_at) - Date.now()) / 86400000));
@@ -252,7 +251,7 @@ app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
   const priceId = plan === 'pro' ? process.env.STRIPE_PRICE_PRO : process.env.STRIPE_PRICE_STARTER;
   if (!priceId) return res.status(400).json({ error: `STRIPE_PRICE_${plan.toUpperCase()} not set in environment` });
 
-  const provider = db.getProviderById(req.provider.id);
+  const provider = await db.getProviderById(req.provider.id);
   const origin = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
 
   // Reuse existing Stripe customer if available
@@ -279,7 +278,7 @@ app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
 
 app.post('/api/stripe/portal', requireAuth, async (req, res) => {
   if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
-  const provider = db.getProviderById(req.provider.id);
+  const provider = await db.getProviderById(req.provider.id);
   if (!provider.stripe_customer_id) return res.status(400).json({ error: 'No billing account found' });
   const origin = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
   const session = await stripe.billingPortal.sessions.create({
@@ -292,42 +291,42 @@ app.post('/api/stripe/portal', requireAuth, async (req, res) => {
 // ══════════════════════════════════════
 //  Provider — widgets
 // ══════════════════════════════════════
-app.get('/api/provider/widgets', requireAuth, (req, res) => {
-  res.json(db.getWidgetsByProvider(req.provider.id));
+app.get('/api/provider/widgets', requireAuth, async (req, res) => {
+  res.json(await db.getWidgetsByProvider(req.provider.id));
 });
 
-app.post('/api/provider/widgets', requireAuth, (req, res) => {
-  const provider = db.getProviderById(req.provider.id);
-  const widget = db.createWidget(req.provider.id, provider.clinic_name, req.body.name);
+app.post('/api/provider/widgets', requireAuth, async (req, res) => {
+  const provider = await db.getProviderById(req.provider.id);
+  const widget = await db.createWidget(req.provider.id, provider.clinic_name, req.body.name);
   res.json(widget);
 });
 
-app.put('/api/provider/widgets/:id', requireAuth, (req, res) => {
+app.put('/api/provider/widgets/:id', requireAuth, async (req, res) => {
   const { name, config, routingType, routingConfig } = req.body;
-  const widget = db.updateWidget(req.params.id, req.provider.id, { name, config, routingType, routingConfig });
+  const widget = await db.updateWidget(req.params.id, req.provider.id, { name, config, routingType, routingConfig });
   if (!widget) return res.status(404).json({ error: 'Widget not found' });
   res.json(widget);
 });
 
-app.delete('/api/provider/widgets/:id', requireAuth, (req, res) => {
-  db.deleteWidget(req.params.id, req.provider.id);
+app.delete('/api/provider/widgets/:id', requireAuth, async (req, res) => {
+  await db.deleteWidget(req.params.id, req.provider.id);
   res.json({ ok: true });
 });
 
 // ══════════════════════════════════════
 //  Provider — leads
 // ══════════════════════════════════════
-app.get('/api/provider/leads', requireAuth, (req, res) => {
-  res.json(db.getLeadsByProvider(req.provider.id));
+app.get('/api/provider/leads', requireAuth, async (req, res) => {
+  res.json(await db.getLeadsByProvider(req.provider.id));
 });
 
 // ══════════════════════════════════════
 //  Public — widget config (loaded by widget JS)
 // ══════════════════════════════════════
-app.get('/api/widget-config/:code', (req, res) => {
-  const widget = db.getWidgetByCode(req.params.code);
+app.get('/api/widget-config/:code', async (req, res) => {
+  const widget = await db.getWidgetByCode(req.params.code);
   if (!widget) return res.status(404).json({ error: 'Widget not found' });
-  res.json(widget.config); // only return public config, not routing secrets
+  res.json(widget.config);
 });
 
 // ══════════════════════════════════════
@@ -359,7 +358,7 @@ app.post('/api/leads', async (req, res) => {
     let providerId = null;
     let widget = null;
     if (body.widgetCode) {
-      widget = db.getWidgetByCode(body.widgetCode);
+      widget = await db.getWidgetByCode(body.widgetCode);
       if (widget) providerId = widget.provider_id;
     }
 
@@ -368,7 +367,7 @@ app.post('/api/leads', async (req, res) => {
       return res.json({ ok: true, demo: true });
     }
 
-    const lead = db.saveLead({ ...body, providerId, widgetCode: body.widgetCode });
+    const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode });
 
     // Route the lead (fire and forget)
     if (widget) routeLead(lead, widget).catch(err => console.warn('Routing error:', err.message));
