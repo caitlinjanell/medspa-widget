@@ -424,13 +424,121 @@ function renderWidget(m) {
   </div>`;
 }
 
+const TREATMENT_OPTIONS = {
+  'Neurotoxins': [
+    'Botox','Dysport','Xeomin','Jeuveau','Daxxify',
+  ],
+  'HA Fillers — Juvederm (Allergan)': [
+    'Juvederm Ultra XC','Juvederm Ultra Plus XC','Juvederm Voluma XC',
+    'Juvederm Vollure XC','Juvederm Volbella XC','Juvederm Volux XC',
+  ],
+  'HA Fillers — Restylane (Galderma)': [
+    'Restylane','Restylane Lyft','Restylane Silk','Restylane Defyne',
+    'Restylane Refyne','Restylane Contour','Restylane Eyelight',
+  ],
+  'HA Fillers — RHA (Revance)': [
+    'RHA 2','RHA 3','RHA 4','RHA Redensity',
+  ],
+  'HA Fillers — Other': [
+    'Belotero Balance','Revanesse Versa','Teosyal','Emervel',
+  ],
+  'Biostimulators': [
+    'Sculptra (PLLA)','Radiesse','Radiesse (+)','Bellafill',
+  ],
+  'Chemical Peels': [
+    'VI Peel','VI Peel Precision Plus','VI Peel Purify','VI Peel Purify with Precision Plus',
+    'TCA Peel','Jessner Peel','Glycolic Acid Peel','Salicylic Acid Peel',
+    'Lactic Acid Peel','Mandelic Acid Peel','PCA Peel',
+    'Obagi Blue Peel Radiance','ZO Stimulator Peel','ZO 3-Step Peel',
+    'SkinMedica Illuminize Peel','SkinMedica Vitalize Peel','SkinMedica Rejuvenize Peel',
+    'Perfect Derma Peel','BioRePeel','Cosmelan Peel',
+  ],
+  'Lasers — Ablative / Resurfacing': [
+    'Fraxel Dual (1550/1927nm)','Fraxel Restore','Halo (Sciton)',
+    'CO2 Laser Resurfacing','Erbium Laser Resurfacing','ActiveFX','DeepFX',
+  ],
+  'Lasers — Non-Ablative / Light': [
+    'BBL BroadBand Light (Sciton)','BBL HERO','Clear + Brilliant','Clear + Brilliant Perméa',
+    'IPL Photofacial','Laser Genesis','Vbeam Pulsed Dye Laser','Excel V',
+  ],
+  'Lasers — Pigment / Tattoo': [
+    'PicoSure','PicoWay','PicoFocus','Enlighten (Cutera)',
+    'Alex TriVantage','MedLite C6',
+  ],
+  'Lasers — Hair Removal': [
+    'GentleMax Pro','GentleLase Pro','Splendor X','Soprano Ice Platinum',
+    'LightSheer Diode','Vectus Diode',
+  ],
+  'RF & Energy Devices': [
+    'Morpheus8','Fractora','Thermage FLX','Ultherapy',
+    'Sofwave','Vivace RF Microneedling','Secret RF','EndyMed Intensif',
+    'Emface','Venus Legacy','Genius RF Microneedling',
+  ],
+  'Body Contouring': [
+    'CoolSculpting','CoolSculpting Elite','CoolTone','SculpSure',
+    'Emsculpt NEO','Emtone','Venus Bliss','TruSculpt iD',
+    'Vanquish ME','BodyTite',
+  ],
+  'Injectables — Other': [
+    'Kybella','PRP (Platelet-Rich Plasma)','PRF (Platelet-Rich Fibrin)',
+    'Sculptra Body','Hyperhidrosis (Botox)','Lip Flip (Botox)',
+    'Nefertiti Lift (Botox)','Masseter Slimming (Botox)',
+  ],
+  'Skin Treatments': [
+    'HydraFacial','HydraFacial Keravive','Microneedling (manual)',
+    'Dermaplaning','Microdermabrasion','LED Light Therapy',
+    'Oxygen Facial','Ultrasound Facial','Lymphatic Drainage Facial',
+  ],
+  'IV & Wellness': [
+    'IV Vitamin Therapy','NAD+ IV Therapy','Glutathione IV',
+    'Vitamin B12 Injection','Vitamin D Injection','Lipo-B Injection','Semaglutide',
+  ],
+};
+
+const ALL_TREATMENT_NAMES = Object.values(TREATMENT_OPTIONS).flat();
+
+function treatNameCell(name, i) {
+  const isCustom = !!(name && !ALL_TREATMENT_NAMES.includes(name));
+  if (isCustom) {
+    return `<div style="display:flex;gap:4px;align-items:center">
+      <input class="treat-inp" id="tn-${i}" value="${esc(name)}" placeholder="Treatment name" style="flex:1">
+      <button class="btn-sm" style="font-size:10px;white-space:nowrap;padding:4px 8px" onclick="switchToSelect(${i})" title="Browse list">☰</button>
+    </div>`;
+  }
+  return `<select class="treat-inp" id="tn-${i}" onchange="if(this.value==='__custom__')switchToInput(${i})" style="cursor:pointer">
+    <option value="">Select treatment…</option>
+    <option value="__custom__" style="color:var(--ac-m);font-style:italic">✏ Type my own…</option>
+    ${Object.entries(TREATMENT_OPTIONS).map(([cat, items]) =>
+      `<optgroup label="${cat}">${items.map(item =>
+        `<option value="${esc(item)}"${name===item?' selected':''}>${esc(item)}</option>`
+      ).join('')}</optgroup>`
+    ).join('')}
+  </select>`;
+}
+
 function treatRow(t, i) {
   return `<tr id="tr-${i}">
-    <td><input class="treat-inp" id="tn-${i}" value="${esc(t.name||'')}" placeholder="Botox"></td>
-    <td><input class="treat-inp" id="tp-${i}" value="${esc(t.price||'')}" placeholder="$300–500"></td>
+    <td style="min-width:220px">${treatNameCell(t.name||'', i)}</td>
+    <td><input class="treat-inp" id="tp-${i}" value="${esc(t.price||'')}" placeholder="e.g. $300–500"></td>
     <td><input class="treat-inp" id="td-${i}" value="${esc(t.notes||'')}" placeholder="Optional AI context"></td>
     <td><button class="btn-danger" onclick="removeTreatment(${i})">✕</button></td>
   </tr>`;
+}
+
+function switchToInput(i) {
+  const td = document.querySelector(`#tr-${i} td:first-child`);
+  if (!td) return;
+  td.innerHTML = `<div style="display:flex;gap:4px;align-items:center">
+    <input class="treat-inp" id="tn-${i}" placeholder="Type treatment name…" style="flex:1" autofocus>
+    <button class="btn-sm" style="font-size:10px;white-space:nowrap;padding:4px 8px" onclick="switchToSelect(${i})" title="Browse list">☰</button>
+  </div>`;
+  document.getElementById(`tn-${i}`)?.focus();
+}
+
+function switchToSelect(i) {
+  const td = document.querySelector(`#tr-${i} td:first-child`);
+  if (!td) return;
+  td.innerHTML = treatNameCell('', i);
 }
 
 function getActiveWidget() { return widgets.find(x => x.id === activeWidgetId) || widgets[0]; }
@@ -453,11 +561,9 @@ function addItem(field, inputId) {
 }
 
 function addTreatment() {
-  const w = getActiveWidget(); if (!w) return;
-  if (!w.config.treatments) w.config.treatments = [];
-  w.config.treatments.push({ name: '', price: '', notes: '' });
-  const i = w.config.treatments.length - 1;
-  document.getElementById('treat-body').insertAdjacentHTML('beforeend', treatRow(w.config.treatments[i], i));
+  const tbody = document.getElementById('treat-body'); if (!tbody) return;
+  const i = tbody.querySelectorAll('tr').length;
+  tbody.insertAdjacentHTML('beforeend', treatRow({ name: '', price: '', notes: '' }, i));
 }
 
 function removeTreatment(i) {
@@ -482,11 +588,17 @@ async function saveBranding() {
 
 async function saveTreatments() {
   const w = getActiveWidget(); if (!w) return;
-  const treatments = (w.config.treatments||[]).map((_,i) => ({
-    name: document.getElementById(`tn-${i}`)?.value.trim()||'',
-    price: document.getElementById(`tp-${i}`)?.value.trim()||'',
-    notes: document.getElementById(`td-${i}`)?.value.trim()||'',
-  })).filter(t => t.name);
+  const rows = document.querySelectorAll('#treat-body tr');
+  const treatments = Array.from(rows).map(row => {
+    const i = row.id.replace('tr-','');
+    const nameEl = document.getElementById(`tn-${i}`);
+    const name = (nameEl?.value || '').trim();
+    return {
+      name: name === '__custom__' ? '' : name,
+      price: (document.getElementById(`tp-${i}`)?.value || '').trim(),
+      notes: (document.getElementById(`td-${i}`)?.value || '').trim(),
+    };
+  }).filter(t => t.name);
   w.config.treatments = treatments;
   await saveConfig(w.id, w.config, true);
 }
