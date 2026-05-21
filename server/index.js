@@ -20,6 +20,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 
 app.use(cors());
 
+app.get('/api/health', async (req, res) => {
+  const status = { server: 'ok', database: 'unknown', anthropic: !!process.env.ANTHROPIC_API_KEY };
+  try { await require('./db').getProviderByEmail('health-check-test@test.com'); status.database = 'ok'; }
+  catch (e) { status.database = e.message; }
+  res.json(status);
+});
+
 // ── Stripe webhook (raw body MUST come before express.json) ──
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
