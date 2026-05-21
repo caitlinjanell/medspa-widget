@@ -157,6 +157,21 @@ async function routeLead(lead, widget) {
     }).catch(() => {});
   }
 
+  // Always-on SMS alert to provider (independent of routing type)
+  if (config.notificationPhone && process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+    try {
+      const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+      const areas = (lead.areas || []).slice(0, 2).join(', ');
+      await twilio.messages.create({
+        to: config.notificationPhone,
+        from: process.env.TWILIO_FROM,
+        body: `New lead @ ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget}${areas ? ' · ' + areas : ''} · View in your AestheticAI dashboard.`,
+      });
+    } catch (err) {
+      console.warn('SMS notification error:', err.message);
+    }
+  }
+
   if (type === 'chatbot' && lead.email) {
     const mods = (lead.modalities || []).join(', ');
     await sendEmail({

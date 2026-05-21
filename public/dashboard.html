@@ -645,6 +645,15 @@ function renderRouting(m) {
     </div>
 
     <div id="route-config"></div>
+
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:0.5px solid var(--border)">
+      <div class="card-title" style="margin-bottom:.5rem">SMS lead alert <span style="font-size:11px;font-weight:500;color:var(--t3);letter-spacing:0">(optional · any routing type)</span></div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:.75rem;line-height:1.55">Get a text the moment a new lead comes in — regardless of which routing method is selected above.</p>
+      <label class="flbl">Your mobile number</label>
+      <input class="finp" id="rc-notify-phone" value="${esc(rc.notificationPhone||'')}" placeholder="+15550001234" type="tel">
+      <p style="font-size:11px;color:var(--t3);margin-top:.35rem">Requires TWILIO_SID, TWILIO_TOKEN, and TWILIO_FROM in your Railway Variables.</p>
+    </div>
+
     <div class="btn-row"><button class="btn-pri" onclick="saveRouting()">Save routing</button></div>
   </div>`;
 
@@ -697,9 +706,10 @@ async function saveRouting() {
   const typeIdx = Array.from(document.querySelectorAll('.route-opt')).indexOf(selectedEl);
   const routingType = ids[typeIdx] || 'none';
   const routingConfig = {
-    email: document.getElementById('rc-email')?.value.trim() || w.routingConfig?.email,
-    phone: document.getElementById('rc-phone')?.value.trim() || w.routingConfig?.phone,
-    url:   document.getElementById('rc-url')?.value.trim()   || w.routingConfig?.url,
+    email:             document.getElementById('rc-email')?.value.trim()         || w.routingConfig?.email,
+    phone:             document.getElementById('rc-phone')?.value.trim()         || w.routingConfig?.phone,
+    url:               document.getElementById('rc-url')?.value.trim()           || w.routingConfig?.url,
+    notificationPhone: document.getElementById('rc-notify-phone')?.value.trim() || '',
   };
   const res = await api('PUT', `/api/provider/widgets/${w.id}`, { routingType, routingConfig });
   if (res && !res.error) {
