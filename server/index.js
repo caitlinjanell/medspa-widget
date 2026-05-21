@@ -20,9 +20,19 @@ function readLeads() {
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
-app.use(express.static(path.join(__dirname, '../public')));
 
+// Routing: / → landing page unless ?code= param present
+app.get('/', (req, res) => {
+  if (req.query.code) {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+  } else {
+    res.sendFile(path.join(__dirname, '../public/landing.html'));
+  }
+});
+app.get('/demo', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '../public/admin.html')));
+
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.post('/api/analyze', async (req, res) => {
   try {
