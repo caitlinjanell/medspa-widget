@@ -192,9 +192,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <script>
 window.onerror = function(msg, src, line) {
   const el = document.getElementById('main-content');
-  if (el) el.innerHTML = `<div style="padding:2rem;color:#c0392b;font-size:13px"><strong>JS error:</strong> ${msg} (${src}:${line})</div>`;
+  if (el) el.innerHTML = '<div style="padding:2rem;color:#c0392b;font-size:13px"><strong>JS error:</strong> ' + msg + ' (' + src + ':' + line + ')</div>';
+  return true;
 };
-
+</script>
+<script>
 // ── Auth guard ──
 const token = localStorage.getItem('aiToken');
 if (!token) window.location.href = '/login';
@@ -980,7 +982,7 @@ async function openPortal() {
 async function renderTestimonial(m) {
   const existing = await api('GET', '/api/provider/testimonial');
   if (existing && !existing.error) {
-    const status = existing.approved ? '✅ Approved — visible on heymaeve.com' : '⏳ Pending review — we'll approve it shortly';
+    const status = existing.approved ? '✅ Approved — visible on heymaeve.com' : "⏳ Pending review — we'll approve it shortly";
     m.innerHTML = `
     <div class="page-hdr">
       <div class="page-title">Your Review</div>
@@ -1020,7 +1022,7 @@ async function submitTestimonial() {
   if (!name || !content) { errEl.textContent = 'Please fill in your name and review.'; errEl.style.display = 'block'; return; }
   const res = await api('POST', '/api/provider/testimonial', { authorName: name, authorRole: role, content });
   if (res?.error) { errEl.textContent = res.error; errEl.style.display = 'block'; return; }
-  toast('Review submitted! We'll approve it shortly ✓');
+  toast("Review submitted! We'll approve it shortly ✓");
   showTab('testimonial');
 }
 
