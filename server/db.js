@@ -72,7 +72,7 @@ function defaultConfig(clinicName) {
     accentDark: '#3C3489',
     accentMid: '#7c5ca8',
     bookingUrl: '',
-    poweredBy: 'Aesthetic Intelligence™',
+    poweredBy: 'Hey, Maeve!',
     areas: ['Forehead', "Crow's feet", 'Lips', 'Cheeks', 'Jawline', 'Skin texture'],
     concerns: ['Fine lines / wrinkles', 'Volume loss', 'Asymmetry', 'Dullness / sun damage', 'Sagging skin'],
     history: ['New to aesthetics', 'Had toxins before', 'Had dermal fillers', 'Had lasers / peels'],

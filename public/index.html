@@ -139,7 +139,7 @@ const DEFAULTS = {
   accentDark:  '#3C3489',
   accentMid:   '#7c5ca8',
   bookingUrl:  'https://example.com/book',
-  poweredBy:   'Aesthetic Intelligence™',
+  poweredBy:   'Hey, Maeve!',
   areas:       ['Forehead',"Crow's feet",'Lips','Cheeks','Jawline','Skin texture'],
   concerns:    ['Fine lines / wrinkles','Volume loss','Asymmetry','Dullness / sun damage','Sagging skin'],
   history:     ['New to aesthetics','Had toxins before','Had dermal fillers','Had lasers / peels'],
@@ -502,7 +502,7 @@ function showResult(d) {
 
   // Build VA system prompt
   const mods = d.recommendedModalities || [];
-  S.chatSys = `You are the AI aesthetic consultant for ${CLINIC.name}, a premium medical aesthetics practice. You have just completed a pre-consultation with ${S.fname} ${S.lname} and generated their personalized treatment plan.
+  S.chatSys = `You are Maeve, the AI aesthetic consultant for ${CLINIC.name}, a premium medical aesthetics practice. You have just completed a pre-consultation with ${S.fname} ${S.lname} and generated their personalized treatment plan.
 
 Client profile:
 - Name: ${S.fname} ${S.lname}
@@ -518,7 +518,7 @@ Recommended treatments:
 ${mods.map((m, i) => { const p = txPrice(m.name); return `${i + 1}. ${m.name}${p ? ` (${p})` : ''}: ${m.why} (Typical longevity: ${m.expectedLongevity})`; }).join('\n')}
 ${d.estimatedInvestment ? `\nInvestment package: ${d.estimatedInvestment.package || ''} — ${d.estimatedInvestment.description || ''}` : ''}
 
-Your role as ${CLINIC.name}'s AI Guide:
+Your role as Maeve, ${CLINIC.name}'s AI consultant:
 - Answer questions about their recommended treatments warmly and knowledgeably
 - Explain what each treatment involves, typical downtime, and what to expect
 - Discuss realistic price ranges when asked (note that final pricing requires in-person consultation)
@@ -531,7 +531,7 @@ Your role as ${CLINIC.name}'s AI Guide:
   S.chatMsgs = [];
   S.chatDisplay = [{
     role: 'ai',
-    text: `Hi ${S.fname}! I've reviewed your personalized treatment plan and I'm here to answer any questions — about the recommended treatments, what to expect, pricing, or how to get started. What would you like to know?`,
+    text: `Hi ${S.fname}! I'm Maeve — I've reviewed your personalized treatment plan and I'm here to answer any questions about the recommended treatments, what to expect, pricing, or how to get started. What would you like to know?`,
   }];
 
   const cId = 'LM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -593,7 +593,7 @@ Your role as ${CLINIC.name}'s AI Guide:
   </div>
   <div style="padding:.8rem 1.2rem 1.2rem">
     <button class="btn pri" onclick="openChat()" style="margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">
-      <span>💬</span> Chat with your AI Guide
+      <span>💬</span> Chat with Maeve
     </button>
     <button class="btn gho" onclick="window.open('${CLINIC.bookingUrl}','_blank')">
       Book my consultation at ${esc(CLINIC.name)} →
@@ -613,7 +613,7 @@ function openChat() {
   <div class="chat-hdr-bar">
     <button class="chat-back" onclick="showResult(S.results)" title="Back to results">←</button>
     <div class="chat-hdr-info">
-      <div class="chat-hdr-name">${esc(CLINIC.name)} AI Guide</div>
+      <div class="chat-hdr-name">Maeve · ${esc(CLINIC.name)}</div>
       <div class="chat-hdr-sub">Based on your consultation · Online now</div>
     </div>
     <div class="chat-online"></div>

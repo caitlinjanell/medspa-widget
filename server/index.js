@@ -133,7 +133,7 @@ async function routeLead(lead, widget) {
           <tr><td style="padding:6px 0;color:#888">AI Recommendations</td><td style="padding:6px 0">${mods}</td></tr>
           <tr><td style="padding:6px 0;color:#888">Package</td><td style="padding:6px 0">${lead.package}</td></tr>
         </table>
-        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by AestheticAI</p>`,
+        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by Hey, Maeve!</p>`,
     });
   }
 
@@ -165,7 +165,7 @@ async function routeLead(lead, widget) {
       await twilio.messages.create({
         to: config.notificationPhone,
         from: process.env.TWILIO_FROM,
-        body: `New lead @ ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget}${areas ? ' · ' + areas : ''} · View in your AestheticAI dashboard.`,
+        body: `New lead @ ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget}${areas ? ' · ' + areas : ''} · View in your Hey, Maeve! dashboard.`,
       });
     } catch (err) {
       console.warn('SMS notification error:', err.message);
