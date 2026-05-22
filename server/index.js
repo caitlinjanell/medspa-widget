@@ -134,7 +134,10 @@ async function sendSms(to, message) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phone: to, message, key }),
   });
-  const result = await resp.json();
+  const text = await resp.text();
+  console.log('TextBelt raw response:', text);
+  let result;
+  try { result = JSON.parse(text); } catch(e) { result = { success: false, error: text }; }
   if (!result.success) console.warn('TextBelt error:', result.error, '| quota remaining:', result.quotaRemaining);
   else console.log('SMS sent via TextBelt, quota remaining:', result.quotaRemaining);
   return result;
