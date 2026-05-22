@@ -4,20 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aesthetic Consultation Widget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ac:#C9A84C;--ac-l:#FEF6DC;--ac-d:#7A5520;--ac-m:#A07830;
-  --bg:#ffffff;--bg2:#FAF8F2;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
+  --ac:#D4AF37;--ac-l:#FDF3CD;--ac-d:#7B4F00;--ac-m:#B8860B;
+  --bg:#ffffff;--bg2:#FAF7F2;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
   --t1:#1a1a1a;--t2:#555;--t3:#999;
   --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;
 }
-body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f2ef;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
-.shell{width:100%;max-width:480px;background:var(--bg);border-radius:var(--r-xl);border:0.5px solid var(--border);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 8px 32px rgba(0,0,0,0.07)}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(150deg,#EDE5D8 0%,#F5EDE2 60%,#EEE6DA 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
+.shell{width:100%;max-width:480px;background:var(--bg);border-radius:var(--r-xl);border:0.5px solid var(--border);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.06),0 12px 40px rgba(0,0,0,0.11)}
 .prog-bg{height:3px;background:var(--bg2)}
 .prog{height:3px;background:var(--ac);transition:width .45s cubic-bezier(.4,0,.2,1);width:20%}
 .hdr{padding:.9rem 1.4rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:56px}
-.hdr-name{font-size:15px;font-weight:600;color:var(--t1);letter-spacing:-.01em}
+.hdr-name{font-size:28px;font-weight:400;color:var(--t1);letter-spacing:.01em;font-family:'Great Vibes',cursive}
 .hdr-logo{max-height:30px;max-width:140px;object-fit:contain}
 .hdr-tag{font-size:11px;color:var(--t3);letter-spacing:.05em;text-transform:uppercase}
 .body{padding:1.6rem 1.4rem 1.4rem}
@@ -33,7 +35,7 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 .chip.on{background:var(--ac-l);border-color:var(--ac);color:var(--ac-d);font-weight:600}
 .glbl{font-size:12px;font-weight:600;color:var(--t2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
 .btn{width:100%;padding:13px;border-radius:var(--r-sm);border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;font-family:inherit;letter-spacing:.01em}
-.pri{background:var(--ac);color:var(--ac-d)}
+.pri{background:linear-gradient(135deg,var(--ac) 0%,#E8AE28 100%);color:var(--ac-d)}
 .pri:hover:not(:disabled){filter:brightness(.92);transform:translateY(-1px)}
 .pri:active:not(:disabled){transform:translateY(0)}
 .pri:disabled{opacity:.4;cursor:not-allowed}
@@ -92,7 +94,7 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 .chat-back{background:none;border:none;cursor:pointer;font-size:20px;color:var(--t2);padding:2px 4px;line-height:1;flex-shrink:0;transition:color .14s}
 .chat-back:hover{color:var(--t1)}
 .chat-hdr-info{flex:1;min-width:0}
-.chat-hdr-name{font-size:14px;font-weight:600;color:var(--t1)}
+.chat-hdr-name{font-size:16px;font-weight:700;color:var(--t1);font-family:'Dancing Script',cursive}
 .chat-hdr-sub{font-size:11px;color:var(--t3);margin-top:1px}
 .chat-online{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.2)}
 .chat-msgs-area{height:310px;overflow-y:auto;padding:.9rem 1.2rem;display:flex;flex-direction:column;gap:9px;background:var(--bg2)}
@@ -134,10 +136,10 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 const DEFAULTS = {
   clinicName:  'Meet Goldie',
   logoUrl:     '',
-  accent:      '#C9A84C',
-  accentLight: '#FEF6DC',
-  accentDark:  '#7A5520',
-  accentMid:   '#A07830',
+  accent:      '#D4AF37',
+  accentLight: '#FDF3CD',
+  accentDark:  '#7B4F00',
+  accentMid:   '#B8860B',
   bookingUrl:  'https://example.com/book',
   poweredBy:   'Meet Goldie',
   areas:       ['Forehead',"Crow's feet",'Under eyes','Lips','Cheeks','Jawline','Neck','Skin texture / tone'],
@@ -623,7 +625,7 @@ Your role as Goldie, ${CLINIC.name}'s AI consultant:
   </div>
   <div style="padding:.8rem 1.2rem 1.2rem">
     <button class="btn pri" onclick="openChat()" style="margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">
-      <span>💬</span> Chat with Goldie
+      <span>💬</span> Chat with <span style="font-family:'Dancing Script',cursive;font-size:1.25em;font-weight:700;vertical-align:middle;line-height:1">Goldie</span>
     </button>
     <button class="btn gho" onclick="window.open('${CLINIC.bookingUrl}','_blank')">
       Book my consultation at ${esc(CLINIC.name)} →

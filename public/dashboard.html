@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard · Meet Goldie</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--ac:#C9A84C;--ac-l:#FEF6DC;--ac-d:#7A5520;--ac-m:#A07830;--bg:#fff;--bg2:#FAF8F2;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#999}
+:root{--ac:#D4AF37;--ac-l:#FDF3CD;--ac-d:#7B4F00;--ac-m:#B8860B;--bg:#fff;--bg2:#FAF8F2;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#999}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg2);min-height:100vh;color:var(--t1);-webkit-font-smoothing:antialiased}
 
 /* ── Layout ── */
@@ -15,8 +16,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .main{padding:2rem;overflow:auto}
 
 /* ── Sidebar ── */
-.sb-logo{font-size:16px;font-weight:800;color:var(--ac-d);letter-spacing:-.02em;padding:0 1.25rem 1.5rem;border-bottom:0.5px solid var(--border);margin-bottom:1rem}
-.sb-logo span{color:var(--ac)}
+.sb-logo{font-size:18px;font-weight:800;color:var(--ac-d);letter-spacing:-.02em;padding:0 1.25rem 1.5rem;border-bottom:0.5px solid var(--border);margin-bottom:1rem}
+.sb-logo span{color:var(--ac);font-family:'Dancing Script',cursive;font-size:1.35em;font-weight:700;vertical-align:middle;line-height:1}
 .sb-section{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);padding:.4rem 1.25rem .4rem;margin-top:.5rem}
 .sb-item{display:flex;align-items:center;gap:.6rem;padding:.6rem 1.25rem;font-size:13px;color:var(--t2);cursor:pointer;border-radius:0;transition:all .14s;border:none;background:none;width:100%;text-align:left;font-family:inherit}
 .sb-item:hover{background:var(--bg2);color:var(--t1)}
@@ -396,10 +397,10 @@ function renderWidget(m) {
     <input class="finp" id="w-logo" value="${esc(c.logoUrl||'')}" placeholder="https://yoursite.com/logo.png">
     <label class="flbl">Accent color</label>
     <div class="color-row">
-      <div class="color-preview" style="background:${esc(c.accent||'#C9A84C')}">
-        <input type="color" id="w-color" value="${esc(c.accent||'#C9A84C')}" oninput="document.querySelector('.color-preview').style.background=this.value;document.getElementById('w-color-hex').textContent=this.value">
+      <div class="color-preview" style="background:${esc(c.accent||'#D4AF37')}">
+        <input type="color" id="w-color" value="${esc(c.accent||'#D4AF37')}" oninput="document.querySelector('.color-preview').style.background=this.value;document.getElementById('w-color-hex').textContent=this.value">
       </div>
-      <span class="color-hex" id="w-color-hex">${esc(c.accent||'#C9A84C')}</span>
+      <span class="color-hex" id="w-color-hex">${esc(c.accent||'#D4AF37')}</span>
     </div>
     <div class="btn-row"><button class="btn-pri" onclick="saveBranding()">Save branding</button></div>
   </div>
@@ -617,8 +618,8 @@ async function saveBranding() {
   w.config.accent       = color;
   // Auto-generate light/mid/dark from accent (simple approximation)
   w.config.accentLight  = color + '33';
-  w.config.accentDark   = '#7A5520';
-  w.config.accentMid    = '#A07830';
+  w.config.accentDark   = '#7B4F00';
+  w.config.accentMid    = '#B8860B';
   await saveConfig(w.id, w.config, true);
 }
 

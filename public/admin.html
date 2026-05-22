@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin · Meet Goldie</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ac:#C9A84C;--ac-l:#FEF6DC;--ac-d:#7A5520;--ac-m:#A07830;
+  --ac:#D4AF37;--ac-l:#FDF3CD;--ac-d:#7B4F00;--ac-m:#B8860B;
   --bg:#ffffff;--bg2:#FAF8F2;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.16);
   --t1:#1a1a1a;--t2:#555;--t3:#999;
 }
@@ -17,7 +18,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
 .login-card{width:100%;max-width:380px;background:var(--bg);border-radius:16px;border:0.5px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden}
 .login-hdr{padding:1.8rem 1.8rem 1.4rem;border-bottom:0.5px solid var(--border)}
-.login-logo{font-size:13px;font-weight:700;color:var(--ac-d);letter-spacing:-.01em;margin-bottom:.3rem}
+.login-logo{font-size:15px;font-weight:700;color:var(--ac-d);letter-spacing:-.01em;margin-bottom:.3rem}
+.login-logo span{font-family:'Dancing Script',cursive;font-size:1.35em;font-weight:700;vertical-align:middle;line-height:1;color:var(--ac)}
 .login-title{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
 .login-sub{font-size:13px;color:var(--t2);margin-top:.3rem}
 .login-body{padding:1.4rem 1.8rem 1.8rem}
@@ -88,7 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
 <div id="login-screen" class="login-wrap">
   <div class="login-card">
     <div class="login-hdr">
-      <div class="login-logo">Meet Goldie</div>
+      <div class="login-logo">Meet <span>Goldie</span></div>
       <div class="login-title">Admin Dashboard</div>
       <div class="login-sub">Enter your admin password to continue.</div>
     </div>
@@ -348,7 +350,7 @@ function renderProviders() {
   if (!el) return;
   if (!ALL_PROVIDERS.length) { el.innerHTML = '<div style="color:var(--t3);font-size:13px">No providers yet.</div>'; return; }
   el.innerHTML = ALL_PROVIDERS.map(p => {
-    const statusColor = p.subscription_status === 'active' ? '#15803d' : p.subscription_status === 'trialing' ? '#A07830' : '#c0392b';
+    const statusColor = p.subscription_status === 'active' ? '#15803d' : p.subscription_status === 'trialing' ? '#B8860B' : '#c0392b';
     const statusLabel = p.subscription_status === 'active' ? '● Active' : p.subscription_status === 'trialing' ? '◐ Trial' : p.subscription_status;
     const joined = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
