@@ -153,7 +153,7 @@ async function routeLead(lead, widget) {
       to: config.email,
       subject: `New consultation lead: ${lead.fname} ${lead.lname}`,
       html: `
-        <h2 style="font-family:sans-serif;color:#3C3489">New Lead — ${widget.config?.clinicName || 'Your Clinic'}</h2>
+        <h2 style="font-family:sans-serif;color:#7A5520">New Lead — ${widget.config?.clinicName || 'Your Clinic'}</h2>
         <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:500px">
           <tr><td style="padding:6px 0;color:#888;width:140px">Name</td><td style="padding:6px 0;font-weight:600">${lead.fname} ${lead.lname}</td></tr>
           <tr><td style="padding:6px 0;color:#888">Email</td><td style="padding:6px 0">${lead.email}</td></tr>
@@ -192,14 +192,14 @@ async function routeLead(lead, widget) {
       subject: `Your personalized treatment plan from ${widget.config?.clinicName || 'us'}`,
       html: `
         <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
-          <h2 style="color:#3C3489">Hi ${lead.fname},</h2>
+          <h2 style="color:#7A5520">Hi ${lead.fname},</h2>
           <p style="color:#555;line-height:1.6">Thank you for completing your pre-consultation. Here's a summary of your personalized treatment plan.</p>
-          <div style="background:#EEEDFE;border-radius:12px;padding:16px 20px;margin:20px 0">
-            <p style="color:#3C3489;font-size:13px;line-height:1.7">${lead.analysis}</p>
+          <div style="background:#FEF6DC;border-radius:12px;padding:16px 20px;margin:20px 0">
+            <p style="color:#7A5520;font-size:13px;line-height:1.7">${lead.analysis}</p>
           </div>
           <p style="color:#555"><strong>Recommended treatments:</strong> ${mods}</p>
           <p style="color:#555"><strong>Investment package:</strong> ${lead.package}</p>
-          <p style="color:#555;margin-top:24px">We look forward to seeing you in person. <a href="${widget.config?.bookingUrl || '#'}" style="color:#7c5ca8;font-weight:600">Book your consultation →</a></p>
+          <p style="color:#555;margin-top:24px">We look forward to seeing you in person. <a href="${widget.config?.bookingUrl || '#'}" style="color:#A07830;font-weight:600">Book your consultation →</a></p>
           <p style="color:#aaa;font-size:12px;margin-top:32px">This is not medical advice. All recommendations are subject to in-person evaluation.</p>
         </div>`,
     });

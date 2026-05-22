@@ -7,8 +7,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;
-  --bg:#ffffff;--bg2:#f8f7fb;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.16);
+  --ac:#C9A84C;--ac-l:#FEF6DC;--ac-d:#7A5520;--ac-m:#A07830;
+  --bg:#ffffff;--bg2:#FAF8F2;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.16);
   --t1:#1a1a1a;--t2:#555;--t3:#999;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;background:#f4f2ef;min-height:100vh;color:var(--t1)}
@@ -348,7 +348,7 @@ function renderProviders() {
   if (!el) return;
   if (!ALL_PROVIDERS.length) { el.innerHTML = '<div style="color:var(--t3);font-size:13px">No providers yet.</div>'; return; }
   el.innerHTML = ALL_PROVIDERS.map(p => {
-    const statusColor = p.subscription_status === 'active' ? '#15803d' : p.subscription_status === 'trialing' ? '#7c5ca8' : '#c0392b';
+    const statusColor = p.subscription_status === 'active' ? '#15803d' : p.subscription_status === 'trialing' ? '#A07830' : '#c0392b';
     const statusLabel = p.subscription_status === 'active' ? '● Active' : p.subscription_status === 'trialing' ? '◐ Trial' : p.subscription_status;
     const joined = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';

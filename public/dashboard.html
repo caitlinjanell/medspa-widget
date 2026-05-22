@@ -6,7 +6,7 @@
 <title>Dashboard · Meet Goldie</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#999}
+:root{--ac:#C9A84C;--ac-l:#FEF6DC;--ac-d:#7A5520;--ac-m:#A07830;--bg:#fff;--bg2:#FAF8F2;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#999}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg2);min-height:100vh;color:var(--t1);-webkit-font-smoothing:antialiased}
 
 /* ── Layout ── */
@@ -111,7 +111,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .dv{font-size:13px;color:var(--t2);line-height:1.6}
 
 /* ── Embed ── */
-.code-block{background:#1a1a2e;color:#c8d6ff;border-radius:10px;padding:1.1rem 1.25rem;font-family:monospace;font-size:12px;line-height:1.7;overflow-x:auto;position:relative}
+.code-block{background:#1C1408;color:#c8d6ff;border-radius:10px;padding:1.1rem 1.25rem;font-family:monospace;font-size:12px;line-height:1.7;overflow-x:auto;position:relative}
 .copy-btn{position:absolute;top:10px;right:10px;padding:5px 11px;border-radius:6px;border:0.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);font-size:11px;cursor:pointer;font-family:inherit;transition:all .14s}
 .copy-btn:hover{background:rgba(255,255,255,.15)}
 
@@ -396,10 +396,10 @@ function renderWidget(m) {
     <input class="finp" id="w-logo" value="${esc(c.logoUrl||'')}" placeholder="https://yoursite.com/logo.png">
     <label class="flbl">Accent color</label>
     <div class="color-row">
-      <div class="color-preview" style="background:${esc(c.accent||'#b49dd4')}">
-        <input type="color" id="w-color" value="${esc(c.accent||'#b49dd4')}" oninput="document.querySelector('.color-preview').style.background=this.value;document.getElementById('w-color-hex').textContent=this.value">
+      <div class="color-preview" style="background:${esc(c.accent||'#C9A84C')}">
+        <input type="color" id="w-color" value="${esc(c.accent||'#C9A84C')}" oninput="document.querySelector('.color-preview').style.background=this.value;document.getElementById('w-color-hex').textContent=this.value">
       </div>
-      <span class="color-hex" id="w-color-hex">${esc(c.accent||'#b49dd4')}</span>
+      <span class="color-hex" id="w-color-hex">${esc(c.accent||'#C9A84C')}</span>
     </div>
     <div class="btn-row"><button class="btn-pri" onclick="saveBranding()">Save branding</button></div>
   </div>
@@ -617,8 +617,8 @@ async function saveBranding() {
   w.config.accent       = color;
   // Auto-generate light/mid/dark from accent (simple approximation)
   w.config.accentLight  = color + '33';
-  w.config.accentDark   = '#3C3489';
-  w.config.accentMid    = '#7c5ca8';
+  w.config.accentDark   = '#7A5520';
+  w.config.accentMid    = '#A07830';
   await saveConfig(w.id, w.config, true);
 }
 
