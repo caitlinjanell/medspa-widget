@@ -262,7 +262,7 @@ function ck() {
     2: S.concerns.length > 0,
     3: S.history && S.budget,
     4: Object.values(S.photos).some(v => v),
-    5: S.fname && S.lname && S.email && validEmail(S.email),
+    5: S.fname && S.lname && S.email && validEmail(S.email) && S.phone,
   }[S.step]);
 }
 
@@ -395,12 +395,12 @@ const STEPS = {
     </div>
     <div class="frow">
       <label class="flbl">Phone <span style="color:var(--t3);font-weight:400">(optional)</span></label>
-      <input class="finp" id="iph" value="${S.phone}" placeholder="(555) 000-0000" oninput="S.phone=this.value.trim()">
+      <input class="finp" id="iph" value="${S.phone}" placeholder="(555) 000-0000" oninput="S.phone=this.value.trim();ck()">
     </div>
     <div class="disc">🔒 Your information is kept confidential and only shared with ${CLINIC.name}'s licensed providers.</div>
     <div style="margin-top:1rem">
       <button class="btn gho" onclick="go(4)">← Back</button>
-      <button class="btn pri" id="nb" onclick="analyze()" ${S.fname&&S.lname&&S.email&&validEmail(S.email)?'':'disabled'}>Unlock my results →</button>
+      <button class="btn pri" id="nb" onclick="analyze()" ${S.fname&&S.lname&&S.email&&validEmail(S.email)&&S.phone?'':'disabled'}>Unlock my results →</button>
     </div>`,
 };
 
