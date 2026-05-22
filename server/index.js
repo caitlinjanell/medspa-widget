@@ -21,10 +21,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 app.use(cors());
 
 app.get('/api/health', async (req, res) => {
-  const status = { server: 'ok', database: 'unknown', anthropic: !!process.env.ANTHROPIC_API_KEY };
+  const status = { server: 'ok', database: 'unknown', anthropic: !!process.env.ANTHROPIC_API_KEY, textbelt: !!process.env.TEXTBELT_KEY };
   try { await require('./db').getProviderByEmail('health-check-test@test.com'); status.database = 'ok'; }
   catch (e) { status.database = e.message; }
   res.json(status);
+});
+
+app.get('/api/test-sms/:phone', async (req, res) => {
+  try {
+    const result = await sendSms(req.params.phone, 'Hey, Maeve! SMS test — it works!');
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ── Stripe webhook (raw body MUST come before express.json) ──
