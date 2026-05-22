@@ -259,6 +259,18 @@ module.exports = {
     return rows[0] || null;
   },
 
+  async getAllProviders() {
+    const { rows } = await pool.query(`
+      SELECT p.id, p.email, p.clinic_name, p.plan, p.subscription_status, p.trial_ends_at, p.created_at,
+             COUNT(l.id) AS lead_count
+      FROM providers p
+      LEFT JOIN leads l ON l.provider_id = p.id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `);
+    return rows;
+  },
+
   async getAllLeads() {
     const { rows } = await pool.query('SELECT l.*, p.clinic_name FROM leads l JOIN providers p ON l.provider_id = p.id ORDER BY l.captured_at DESC');
     return rows.map(parseLead);

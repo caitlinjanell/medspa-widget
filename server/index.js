@@ -491,6 +491,12 @@ app.get('/api/admin/leads', async (req, res) => {
   res.json(await db.getAllLeads());
 });
 
+app.get('/api/admin/providers', async (req, res) => {
+  const pw = process.env.ADMIN_PASSWORD || 'admin123';
+  if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
+  res.json(await db.getAllProviders());
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`\n  Widget:    http://localhost:${PORT}`);

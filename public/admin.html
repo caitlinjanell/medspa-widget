@@ -88,8 +88,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
 <div id="login-screen" class="login-wrap">
   <div class="login-card">
     <div class="login-hdr">
-      <div class="login-logo">Lumière Aesthetics</div>
-      <div class="login-title">Lead Dashboard</div>
+      <div class="login-logo">Hey, Maeve!</div>
+      <div class="login-title">Admin Dashboard</div>
       <div class="login-sub">Enter your admin password to continue.</div>
     </div>
     <div class="login-body">
@@ -132,6 +132,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
     <div class="leads-grid" id="leads-list"></div>
 
     <div style="margin-top:2.5rem">
+      <div class="dash-title" style="font-size:20px;margin-bottom:1rem">🏥 Providers</div>
+      <div id="providers-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+    </div>
+
+    <div style="margin-top:2.5rem">
       <div class="dash-title" style="font-size:20px;margin-bottom:1rem">⭐ Testimonials</div>
       <div id="testi-list" style="display:flex;flex-direction:column;gap:.75rem"></div>
     </div>
@@ -140,6 +145,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;backgroun
 
 <script>
 let ALL_LEADS = [];
+let ALL_PROVIDERS = [];
 let SESSION_PW = '';
 
 function $(id) { return document.getElementById(id); }
@@ -151,15 +157,20 @@ async function login() {
   const pw = $('pw').value;
   $('login-err').textContent = '';
   try {
-    const res = await fetch('/api/admin/leads?password=' + encodeURIComponent(pw));
-    if (!res.ok) throw new Error('bad');
-    ALL_LEADS = await res.json();
+    const [leadsRes, providersRes] = await Promise.all([
+      fetch('/api/admin/leads?password=' + encodeURIComponent(pw)),
+      fetch('/api/admin/providers?password=' + encodeURIComponent(pw)),
+    ]);
+    if (!leadsRes.ok) throw new Error('bad');
+    ALL_LEADS = await leadsRes.json();
+    ALL_PROVIDERS = providersRes.ok ? await providersRes.json() : [];
     SESSION_PW = pw;
     sessionStorage.setItem('adminPw', pw);
     $('login-screen').style.display = 'none';
     $('dashboard').style.display = '';
     renderStats();
     renderLeads();
+    renderProviders();
     loadTestimonials();
   } catch {
     $('login-err').textContent = 'Incorrect password. Please try again.';
@@ -169,11 +180,16 @@ async function login() {
 
 async function refreshLeads() {
   try {
-    const res = await fetch('/api/leads?password=' + encodeURIComponent(SESSION_PW));
-    if (!res.ok) throw new Error('bad');
-    ALL_LEADS = await res.json();
+    const [leadsRes, providersRes] = await Promise.all([
+      fetch('/api/admin/leads?password=' + encodeURIComponent(SESSION_PW)),
+      fetch('/api/admin/providers?password=' + encodeURIComponent(SESSION_PW)),
+    ]);
+    if (!leadsRes.ok) throw new Error('bad');
+    ALL_LEADS = await leadsRes.json();
+    ALL_PROVIDERS = providersRes.ok ? await providersRes.json() : [];
     renderStats();
     renderLeads();
+    renderProviders();
   } catch {
     alert('Failed to refresh. Please reload the page.');
   }
@@ -197,7 +213,15 @@ function renderStats() {
   const topBudget = Object.entries(budgetCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
   const withPhotos = ALL_LEADS.filter(l => l.hasPhotos).length;
 
+  const trialing = ALL_PROVIDERS.filter(p => p.subscription_status === 'trialing').length;
+  const active = ALL_PROVIDERS.filter(p => p.subscription_status === 'active').length;
+
   $('stats-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Providers</div>
+      <div class="stat-val">${ALL_PROVIDERS.length}</div>
+      <div class="stat-sub">${trialing} trialing · ${active} paid</div>
+    </div>
     <div class="stat-card">
       <div class="stat-label">Total leads</div>
       <div class="stat-val">${ALL_LEADS.length}</div>
@@ -207,11 +231,6 @@ function renderStats() {
       <div class="stat-label">Today</div>
       <div class="stat-val">${todayCount}</div>
       <div class="stat-sub">${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">With photos</div>
-      <div class="stat-val">${withPhotos}</div>
-      <div class="stat-sub">AI vision analysis</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Top budget range</div>
@@ -319,6 +338,29 @@ function renderLeads() {
           <div class="detail-lbl">Skin quality (AI assessment)</div>
           <div class="detail-val">${esc(l.skinQuality)}</div>
         </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderProviders() {
+  const el = $('providers-list');
+  if (!el) return;
+  if (!ALL_PROVIDERS.length) { el.innerHTML = '<div style="color:var(--t3);font-size:13px">No providers yet.</div>'; return; }
+  el.innerHTML = ALL_PROVIDERS.map(p => {
+    const statusColor = p.subscription_status === 'active' ? '#15803d' : p.subscription_status === 'trialing' ? '#7c5ca8' : '#c0392b';
+    const statusLabel = p.subscription_status === 'active' ? '● Active' : p.subscription_status === 'trialing' ? '◐ Trial' : p.subscription_status;
+    const joined = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    return `<div style="background:#fff;border-radius:12px;border:0.5px solid var(--border);padding:.85rem 1.1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;color:var(--t1)">${esc(p.clinic_name)}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px">${esc(p.email)}</div>
+      </div>
+      <div style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--t3)">
+        <span style="color:${statusColor};font-weight:600">${statusLabel}${trialEnd ? ' · ends ' + trialEnd : ''}</span>
+        <span>${p.lead_count} lead${p.lead_count == 1 ? '' : 's'}</span>
+        <span>Joined ${joined}</span>
       </div>
     </div>`;
   }).join('');
