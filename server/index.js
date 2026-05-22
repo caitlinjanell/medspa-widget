@@ -134,12 +134,8 @@ async function sendSms(to, message) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phone: to, message, key }),
   });
-  const text = await resp.text();
-  console.log('TextBelt raw response:', text);
-  let result;
-  try { result = JSON.parse(text); } catch(e) { result = { success: false, error: text }; }
-  if (!result.success) console.warn('TextBelt error:', result.error, '| quota remaining:', result.quotaRemaining);
-  else console.log('SMS sent via TextBelt, quota remaining:', result.quotaRemaining);
+  const result = await resp.json();
+  if (!result.success) console.warn('TextBelt error:', result.error);
   return result;
 }
 
@@ -147,7 +143,8 @@ async function sendSms(to, message) {
 async function routeLead(lead, widget) {
   const type = widget.routing_type;
   const config = typeof widget.routingConfig === 'object' ? widget.routingConfig : {};
-  console.log('routeLead — type:', type, '| notificationPhone:', config.notificationPhone, '| routingConfig keys:', Object.keys(config));
+  const smsMsg = `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Hey Maeve dashboard`;
+  const smsSentTo = new Set();
 
   if (type === 'email' && config.email) {
     const areas = (lead.areas || []).join(', ');
@@ -171,7 +168,8 @@ async function routeLead(lead, widget) {
   }
 
   if (type === 'sms' && config.phone) {
-    await sendSms(config.phone, `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Hey Maeve dashboard`);
+    await sendSms(config.phone, smsMsg);
+    smsSentTo.add(config.phone);
   }
 
   if (type === 'webhook' && config.url) {
@@ -182,13 +180,9 @@ async function routeLead(lead, widget) {
     }).catch(() => {});
   }
 
-  // Always-on SMS alert to provider (independent of routing type)
-  if (config.notificationPhone) {
-    const areas = (lead.areas || []).slice(0, 2).join(', ');
-    await sendSms(
-      config.notificationPhone,
-      `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Hey Maeve dashboard`
-    );
+  // Always-on SMS alert — skip if already sent to this number via routing
+  if (config.notificationPhone && !smsSentTo.has(config.notificationPhone)) {
+    await sendSms(config.notificationPhone, smsMsg);
   }
 
   if (type === 'chatbot' && lead.email) {
