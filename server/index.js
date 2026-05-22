@@ -389,15 +389,12 @@ app.post('/api/leads', async (req, res) => {
       if (widget) providerId = widget.provider_id;
     }
 
-    console.log('Lead submission — widgetCode:', body.widgetCode, '| widgetFound:', !!widget, '| providerId:', providerId);
-
-    // Fall back to legacy file-based storage if no widget code (demo mode)
+    // Fall back to demo mode if no widget code
     if (!providerId) {
       return res.json({ ok: true, demo: true });
     }
 
     const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode, photos: body.photos || {} });
-    console.log('Lead saved:', lead.id, '| routing_type:', widget.routing_type, '| notificationPhone:', widget.routingConfig?.notificationPhone);
 
     // Route the lead (fire and forget)
     if (widget) routeLead(lead, widget).catch(err => console.warn('Routing error:', err.message));
