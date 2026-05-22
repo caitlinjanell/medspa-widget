@@ -168,7 +168,7 @@ async function routeLead(lead, widget) {
   }
 
   if (type === 'sms' && config.phone) {
-    await sendSms(config.phone, `New lead: ${lead.fname} ${lead.lname} · ${lead.phone || 'no phone'} · Budget: ${lead.budget} · ${(lead.areas||[]).slice(0,2).join(', ')}`);
+    await sendSms(config.phone, `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Hey Maeve dashboard`);
   }
 
   if (type === 'webhook' && config.url) {
@@ -184,7 +184,7 @@ async function routeLead(lead, widget) {
     const areas = (lead.areas || []).slice(0, 2).join(', ');
     await sendSms(
       config.notificationPhone,
-      `New lead at ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.phone || lead.budget} · Check your Hey Maeve dashboard`
+      `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Hey Maeve dashboard`
     );
   }
 
