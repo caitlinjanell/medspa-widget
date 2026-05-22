@@ -687,7 +687,7 @@ function renderRouting(m) {
       <p style="font-size:13px;color:var(--t2);margin-bottom:.75rem;line-height:1.55">Get a text the moment a new lead comes in — regardless of which routing method is selected above.</p>
       <label class="flbl">Your mobile number</label>
       <input class="finp" id="rc-notify-phone" value="${esc(rc.notificationPhone||'')}" placeholder="+15550001234" type="tel">
-      <p style="font-size:11px;color:var(--t3);margin-top:.35rem">Requires TWILIO_SID, TWILIO_TOKEN, and TWILIO_FROM in your Railway Variables.</p>
+      <p style="font-size:11px;color:var(--t3);margin-top:.35rem">Requires <strong>TEXTBELT_KEY</strong> in your Railway Variables. Get a key at textbelt.com (~$0.04/text).</p>
     </div>
 
     <div class="btn-row"><button class="btn-pri" onclick="saveRouting()">Save routing</button></div>
@@ -721,9 +721,9 @@ function renderRouteConfig(type, rc) {
     none: '',
     email: `<label class="flbl">Send notifications to this email</label>
       <input class="finp" id="rc-email" value="${esc(rc.email||'')}" placeholder="provider@yourclinic.com" type="email">`,
-    sms: `<label class="flbl">Your phone number (via Twilio)</label>
+    sms: `<label class="flbl">Your phone number</label>
       <input class="finp" id="rc-phone" value="${esc(rc.phone||'')}" placeholder="+15550001234">
-      <p style="font-size:11px;color:var(--t3);margin-top:.4rem">Requires TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM set in your environment variables.</p>`,
+      <p style="font-size:11px;color:var(--t3);margin-top:.4rem">Requires <strong>TEXTBELT_KEY</strong> in your Railway Variables. Get a key at textbelt.com.</p>`,
     webhook: `<label class="flbl">Webhook URL (we'll POST lead JSON here)</label>
       <input class="finp" id="rc-url" value="${esc(rc.url||'')}" placeholder="https://hooks.zapier.com/...">
       <p style="font-size:11px;color:var(--t3);margin-top:.4rem">Works with Zapier, Make, HubSpot, and any REST endpoint.</p>`,
