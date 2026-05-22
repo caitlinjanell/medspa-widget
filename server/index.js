@@ -118,6 +118,19 @@ async function sendEmail({ to, subject, html }) {
   await transporter.sendMail({ from: process.env.EMAIL_FROM || process.env.EMAIL_USER, to, subject, html });
 }
 
+async function sendSms(to, message) {
+  const key = process.env.TEXTBELT_KEY || 'textbelt';
+  const resp = await fetch('https://textbelt.com/text', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: to, message, key }),
+  });
+  const result = await resp.json();
+  if (!result.success) console.warn('TextBelt error:', result.error, '| quota remaining:', result.quotaRemaining);
+  else console.log('SMS sent via TextBelt, quota remaining:', result.quotaRemaining);
+  return result;
+}
+
 // ── Lead routing ──
 async function routeLead(lead, widget) {
   const type = widget.routing_type;
@@ -145,15 +158,7 @@ async function routeLead(lead, widget) {
   }
 
   if (type === 'sms' && config.phone) {
-    // Twilio SMS
-    if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
-      const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
-      await twilio.messages.create({
-        to: config.phone,
-        from: process.env.TWILIO_FROM,
-        body: `New lead: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget} · ${(lead.areas||[]).slice(0,2).join(', ')}`,
-      });
-    }
+    await sendSms(config.phone, `New lead: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget} · ${(lead.areas||[]).slice(0,2).join(', ')}`);
   }
 
   if (type === 'webhook' && config.url) {
@@ -165,22 +170,12 @@ async function routeLead(lead, widget) {
   }
 
   // Always-on SMS alert to provider (independent of routing type)
-  console.log('SMS check — notificationPhone:', config.notificationPhone, '| TWILIO_SID set:', !!process.env.TWILIO_SID, '| TWILIO_TOKEN set:', !!process.env.TWILIO_TOKEN, '| TWILIO_FROM:', process.env.TWILIO_FROM);
-  if (config.notificationPhone && process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
-    try {
-      const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
-      const areas = (lead.areas || []).slice(0, 2).join(', ');
-      const msg = await twilio.messages.create({
-        to: config.notificationPhone,
-        from: process.env.TWILIO_FROM,
-        body: `New lead @ ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget}${areas ? ' · ' + areas : ''} · View in your Hey, Maeve! dashboard.`,
-      });
-      console.log('SMS sent successfully, SID:', msg.sid);
-    } catch (err) {
-      console.warn('SMS notification error:', err.message, err.code, err.status);
-    }
-  } else {
-    console.warn('SMS skipped — missing:', !config.notificationPhone ? 'notificationPhone' : !process.env.TWILIO_SID ? 'TWILIO_SID' : 'TWILIO_TOKEN');
+  if (config.notificationPhone) {
+    const areas = (lead.areas || []).slice(0, 2).join(', ');
+    await sendSms(
+      config.notificationPhone,
+      `New lead @ ${widget.config?.clinicName || 'your clinic'}: ${lead.fname} ${lead.lname} · ${lead.email} · Budget: ${lead.budget}${areas ? ' · ' + areas : ''}`
+    );
   }
 
   if (type === 'chatbot' && lead.email) {
