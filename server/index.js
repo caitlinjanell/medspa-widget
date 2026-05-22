@@ -27,14 +27,6 @@ app.get('/api/health', async (req, res) => {
   res.json(status);
 });
 
-app.get('/api/test-sms/:phone', async (req, res) => {
-  try {
-    const result = await sendSms(req.params.phone, 'Meet Goldie SMS test — it works!');
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 // ── Stripe webhook (raw body MUST come before express.json) ──
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
