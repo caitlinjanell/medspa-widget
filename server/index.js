@@ -144,6 +144,7 @@ async function sendSms(to, message) {
 async function routeLead(lead, widget) {
   const type = widget.routing_type;
   const config = typeof widget.routingConfig === 'object' ? widget.routingConfig : {};
+  console.log('routeLead — type:', type, '| notificationPhone:', config.notificationPhone, '| routingConfig keys:', Object.keys(config));
 
   if (type === 'email' && config.email) {
     const areas = (lead.areas || []).join(', ');
