@@ -29,7 +29,7 @@ app.get('/api/health', async (req, res) => {
 
 app.get('/api/test-sms/:phone', async (req, res) => {
   try {
-    const result = await sendSms(req.params.phone, 'Hey, Maeve! SMS test — it works!');
+    const result = await sendSms(req.params.phone, 'Meet Goldie SMS test — it works!');
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -143,7 +143,7 @@ async function sendSms(to, message) {
 async function routeLead(lead, widget) {
   const type = widget.routing_type;
   const config = typeof widget.routingConfig === 'object' ? widget.routingConfig : {};
-  const smsMsg = `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Hey Maeve dashboard`;
+  const smsMsg = `New lead at ${widget.config?.clinicName || 'your clinic'}: Check your Meet Goldie dashboard`;
   const smsSentTo = new Set();
 
   if (type === 'email' && config.email) {
@@ -163,7 +163,7 @@ async function routeLead(lead, widget) {
           <tr><td style="padding:6px 0;color:#888">AI Recommendations</td><td style="padding:6px 0">${mods}</td></tr>
           <tr><td style="padding:6px 0;color:#888">Package</td><td style="padding:6px 0">${lead.package}</td></tr>
         </table>
-        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by Hey, Maeve!</p>`,
+        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by Meet Goldie</p>`,
     });
   }
 

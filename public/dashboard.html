@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard · Hey, Maeve!</title>
+<title>Dashboard · Meet Goldie</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#999}
@@ -149,7 +149,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <div class="layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sb-logo">Hey, <span>Maeve!</span></div>
+    <div class="sb-logo">Meet <span>Goldie</span></div>
     <div class="sb-section">Manage</div>
     <button class="sb-item active" onclick="showTab('overview')" id="tab-overview">
       <span class="ico">📊</span> Overview
@@ -982,11 +982,11 @@ async function openPortal() {
 async function renderTestimonial(m) {
   const existing = await api('GET', '/api/provider/testimonial');
   if (existing && !existing.error) {
-    const status = existing.approved ? '✅ Approved — visible on heymaeve.com' : "⏳ Pending review — we'll approve it shortly";
+    const status = existing.approved ? '✅ Approved — visible on meetgoldie.com' : "⏳ Pending review — we'll approve it shortly";
     m.innerHTML = `
     <div class="page-hdr">
       <div class="page-title">Your Review</div>
-      <div class="page-sub">Thank you for sharing your experience with Hey, Maeve!</div>
+      <div class="page-sub">Thank you for sharing your experience with Meet Goldie</div>
     </div>
     <div class="card" style="max-width:560px">
       <div style="font-size:13px;font-weight:600;color:var(--ac-m);margin-bottom:.75rem">${status}</div>
@@ -1009,7 +1009,7 @@ async function renderTestimonial(m) {
     <label class="flbl">Your title / role <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
     <input class="finp" id="t-role" placeholder="e.g. Owner, Nurse Injector, Medical Director" style="margin-bottom:12px">
     <label class="flbl">Your review <span style="font-weight:400;color:var(--t3)" id="t-count">(0 / 500)</span></label>
-    <textarea class="finp" id="t-content" rows="5" placeholder="Tell us how Hey, Maeve! has helped your practice…" oninput="document.getElementById('t-count').textContent='('+this.value.length+' / 500)'" style="resize:vertical;margin-bottom:16px"></textarea>
+    <textarea class="finp" id="t-content" rows="5" placeholder="Tell us how Meet Goldie has helped your practice…" oninput="document.getElementById('t-count').textContent='('+this.value.length+' / 500)'" style="resize:vertical;margin-bottom:16px"></textarea>
     <button class="btn-pri" onclick="submitTestimonial()">Submit review →</button>
   </div>`;
 }
@@ -1030,7 +1030,7 @@ async function submitTestimonial() {
 const urlParams = new URLSearchParams(location.search);
 if (urlParams.get('upgraded') === '1') {
   history.replaceState({}, '', '/dashboard');
-  setTimeout(() => toast('🎉 Subscription activated! Welcome to Hey, Maeve!', 4000), 500);
+  setTimeout(() => toast('🎉 Subscription activated! Welcome to Meet Goldie', 4000), 500);
 }
 
 // ── Boot ──
