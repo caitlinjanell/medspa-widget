@@ -351,6 +351,14 @@ app.post('/api/stripe/portal', requireAuth, async (req, res) => {
 });
 
 // ══════════════════════════════════════
+//  Provider — update clinic name
+app.put('/api/provider/me', requireAuth, async (req, res) => {
+  const { clinicName } = req.body;
+  if (clinicName) await db.updateClinicName(req.provider.id, clinicName);
+  const provider = await db.getProviderById(req.provider.id);
+  res.json({ id: provider.id, email: provider.email, clinicName: provider.clinic_name });
+});
+
 //  Provider — widgets
 // ══════════════════════════════════════
 app.get('/api/provider/widgets', requireAuth, async (req, res) => {

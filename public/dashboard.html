@@ -612,15 +612,23 @@ function removeTreatment(i) {
 async function saveBranding() {
   const w = getActiveWidget(); if (!w) return;
   const color = document.getElementById('w-color').value;
-  w.config.clinicName   = document.getElementById('w-name').value.trim();
+  const newClinicName = document.getElementById('w-name').value.trim();
+  w.config.clinicName   = newClinicName;
   w.config.bookingUrl   = document.getElementById('w-booking').value.trim();
   w.config.logoUrl      = document.getElementById('w-logo').value.trim();
   w.config.accent       = color;
-  // Auto-generate light/mid/dark from accent (simple approximation)
   w.config.accentLight  = color + '33';
   w.config.accentDark   = '#3C3489';
   w.config.accentMid    = '#7c5ca8';
-  await saveConfig(w.id, w.config, true);
+  await saveConfig(w.id, w.config, false);
+  // Also update provider clinic name so sidebar/dashboard reflects the change
+  const updated = await api('PUT', '/api/provider/me', { clinicName: newClinicName });
+  if (updated && !updated.error) {
+    provider = { ...provider, clinicName: updated.clinicName };
+    document.getElementById('sb-clinic').textContent = updated.clinicName;
+    localStorage.setItem('aiProvider', JSON.stringify(provider));
+  }
+  toast('Saved ✓');
 }
 
 async function saveTreatments() {

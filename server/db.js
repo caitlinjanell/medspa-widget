@@ -141,6 +141,10 @@ module.exports = {
     return rows[0] || null;
   },
 
+  async updateClinicName(id, clinicName) {
+    await pool.query('UPDATE providers SET clinic_name = $1 WHERE id = $2', [clinicName, id]);
+  },
+
   async getProviderByStripeCustomer(customerId) {
     const { rows } = await pool.query('SELECT * FROM providers WHERE stripe_customer_id = $1', [customerId]);
     return rows[0] || null;
