@@ -295,7 +295,7 @@ app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
     success_url: `${origin}/dashboard?upgraded=1`,
     cancel_url:  `${origin}/dashboard?canceled=1`,
     metadata: { providerId: provider.id },
-    subscription_data: { trial_period_days: 0 },
+    subscription_data: { trial_period_days: 14 },
     allow_promotion_codes: true,
   });
 
