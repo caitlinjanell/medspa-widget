@@ -433,7 +433,15 @@ async function callAPI(messages, maxTokens = 1000) {
   }
   const data = await res.json();
   const text = data.content.filter(c => c.type === 'text').map(c => c.text).join('');
-  return JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+  const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Extract the outermost JSON object and retry
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Could not parse AI response. Please try again.');
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -726,8 +734,8 @@ function showError(msg) {
   b.innerHTML = `
     <div class="eye">Something went wrong</div>
     <div class="ttl">Unable to generate results</div>
-    <div class="err-box"><strong>Error:</strong> ${esc(msg || 'Unknown error')}<br><br>Make sure the server is running and <code>ANTHROPIC_API_KEY</code> is set in your <code>.env</code> file.</div>
-    <button class="btn gho" onclick="go(5)">← Try again</button>`;
+    <div class="err-box">Something went wrong on our end. Please try again in a moment.</div>
+    <button class="btn pri" onclick="go(5)">← Try again</button>`;
 }
 
 // Boot — load config then start
