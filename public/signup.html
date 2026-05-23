@@ -65,6 +65,16 @@ async function signup() {
     if (!res.ok) throw new Error(data.error || 'Signup failed');
     localStorage.setItem('aiToken', data.token);
     localStorage.setItem('aiProvider', JSON.stringify(data.provider));
+    const plan = new URLSearchParams(window.location.search).get('plan');
+    if (plan === 'starter' || plan === 'pro') {
+      const co = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + data.token },
+        body: JSON.stringify({ plan }),
+      });
+      const coData = await co.json();
+      if (coData.url) { window.location.href = coData.url; return; }
+    }
     window.location.href = '/dashboard';
   } catch (e) {
     err.textContent = e.message; err.style.display = 'block';

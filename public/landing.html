@@ -374,7 +374,7 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
           <li>Custom branding &amp; colors</li>
           <li>Email support</li>
         </ul>
-        <a href="mailto:caitlinjanell@gmail.com?subject=Starter Plan — Meet Goldie" class="price-cta">Get started</a>
+        <button class="price-cta" onclick="startCheckout('starter')">Get started</button>
       </div>
       <div class="price-card featured">
         <div class="price-badge">Most popular</div>
@@ -391,7 +391,7 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
           <li>Priority email &amp; chat support</li>
           <li>New features first</li>
         </ul>
-        <a href="mailto:caitlinjanell@gmail.com?subject=Pro Plan — Meet Goldie" class="price-cta">Get started</a>
+        <button class="price-cta" onclick="startCheckout('pro')">Get started</button>
       </div>
       <div class="price-card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:1rem;padding:2.5rem 2rem">
         <div style="font-size:28px">✦</div>
@@ -490,10 +490,31 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2025 Meet Goldie. All rights reserved.</span>
+    <span>© 2026 Meet Goldie. All rights reserved.</span>
     <span>Powered by Claude AI · Built for medspas</span>
   </div>
 </footer>
+<script>
+async function startCheckout(plan) {
+  const token = localStorage.getItem('aiToken');
+  if (!token) {
+    window.location.href = '/signup?plan=' + plan;
+    return;
+  }
+  try {
+    const res = await fetch('/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ plan }),
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert('Could not start checkout. Please try again.');
+  } catch {
+    alert('Could not start checkout. Please try again.');
+  }
+}
+</script>
 
 </body>
 </html>
