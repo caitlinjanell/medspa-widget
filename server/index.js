@@ -211,6 +211,8 @@ app.get('/admin',     (req, res) => res.sendFile(path.join(__dirname, '../public
 app.get('/signup',    (req, res) => res.sendFile(path.join(__dirname, '../public/signup.html'), NO_CACHE));
 app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, '../public/login.html'), NO_CACHE));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../public/dashboard.html'), NO_CACHE));
+app.get('/privacy',   (req, res) => res.sendFile(path.join(__dirname, '../public/privacy.html')));
+app.get('/terms',     (req, res) => res.sendFile(path.join(__dirname, '../public/terms.html')));
 app.get('/logout',    (req, res) => res.sendFile(path.join(__dirname, '../public/logout.html')));
 
 app.use(express.static(path.join(__dirname, '../public')));
