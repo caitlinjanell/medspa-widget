@@ -20,6 +20,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 
 app.use(cors());
 
+app.get('/api/test-email/:to', async (req, res) => {
+  const pw = process.env.ADMIN_PASSWORD || 'admin123';
+  if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await sendEmail({ to: req.params.to, subject: 'Meet Goldie — email test', html: '<p style="font-family:sans-serif">Your email notifications are working correctly.</p>' });
+    res.json({ ok: true, sent: req.params.to });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/health', async (req, res) => {
   const status = { server: 'ok', database: 'unknown', anthropic: !!process.env.ANTHROPIC_API_KEY, textbelt: !!process.env.TEXTBELT_KEY };
   try { await require('./db').getProviderByEmail('health-check-test@test.com'); status.database = 'ok'; }
