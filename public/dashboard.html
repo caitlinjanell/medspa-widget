@@ -684,6 +684,13 @@ function renderRouting(m) {
     <div id="route-config"></div>
 
     <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:0.5px solid var(--border)">
+      <div class="card-title" style="margin-bottom:.5rem">Email lead alert <span style="font-size:11px;font-weight:500;color:var(--t3);letter-spacing:0">(optional · any routing type)</span></div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:.75rem;line-height:1.55">Get an email the moment a new lead comes in — regardless of which routing method is selected above.</p>
+      <label class="flbl">Your email address</label>
+      <input class="finp" id="rc-notify-email" value="${esc(rc.notificationEmail||'')}" placeholder="you@yourclinic.com" type="email">
+    </div>
+
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:0.5px solid var(--border)">
       <div class="card-title" style="margin-bottom:.5rem">SMS lead alert <span style="font-size:11px;font-weight:500;color:var(--t3);letter-spacing:0">(optional · any routing type)</span></div>
       <p style="font-size:13px;color:var(--t2);margin-bottom:.75rem;line-height:1.55">Get a text the moment a new lead comes in — regardless of which routing method is selected above.</p>
       <label class="flbl">Your mobile number</label>
@@ -747,6 +754,7 @@ async function saveRouting() {
     phone:             document.getElementById('rc-phone')?.value.trim()         || w.routingConfig?.phone,
     url:               document.getElementById('rc-url')?.value.trim()           || w.routingConfig?.url,
     notificationPhone: document.getElementById('rc-notify-phone')?.value.trim() || '',
+    notificationEmail: document.getElementById('rc-notify-email')?.value.trim() || '',
   };
   const res = await api('PUT', `/api/provider/widgets/${w.id}`, { routingType, routingConfig });
   if (res && !res.error) {

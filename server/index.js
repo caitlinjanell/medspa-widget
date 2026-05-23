@@ -177,6 +177,28 @@ async function routeLead(lead, widget) {
     await sendSms(config.notificationPhone, smsMsg);
   }
 
+  // Always-on email alert
+  if (config.notificationEmail) {
+    const areas = (lead.areas || []).join(', ');
+    const mods = (lead.modalities || []).join(', ');
+    await sendEmail({
+      to: config.notificationEmail,
+      subject: `New consultation lead: ${lead.fname} ${lead.lname}`,
+      html: `
+        <h2 style="font-family:sans-serif;color:#3C3489">New Lead — ${widget.config?.clinicName || 'Your Clinic'}</h2>
+        <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:500px">
+          <tr><td style="padding:6px 0;color:#888;width:140px">Name</td><td style="padding:6px 0;font-weight:600">${lead.fname} ${lead.lname}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Email</td><td style="padding:6px 0">${lead.email}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Phone</td><td style="padding:6px 0">${lead.phone || '—'}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Budget</td><td style="padding:6px 0">${lead.budget}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Areas</td><td style="padding:6px 0">${areas}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">AI Recommendations</td><td style="padding:6px 0">${mods}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Package</td><td style="padding:6px 0">${lead.package}</td></tr>
+        </table>
+        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by Meet Goldie</p>`,
+    }).catch(err => console.warn('Email alert error:', err.message));
+  }
+
   if (type === 'chatbot' && lead.email) {
     const mods = (lead.modalities || []).join(', ');
     await sendEmail({
