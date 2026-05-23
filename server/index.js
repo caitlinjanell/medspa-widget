@@ -213,6 +213,7 @@ app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, '../public
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../public/dashboard.html'), NO_CACHE));
 app.get('/privacy',   (req, res) => res.sendFile(path.join(__dirname, '../public/privacy.html')));
 app.get('/terms',     (req, res) => res.sendFile(path.join(__dirname, '../public/terms.html')));
+app.get('/cookies',   (req, res) => res.sendFile(path.join(__dirname, '../public/cookies.html')));
 app.get('/logout',    (req, res) => res.sendFile(path.join(__dirname, '../public/logout.html')));
 
 app.use(express.static(path.join(__dirname, '../public')));
