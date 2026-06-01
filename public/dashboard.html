@@ -675,11 +675,8 @@ function renderRouting(m) {
     <div class="card-title">Notification method</div>
     <div class="route-options">
       ${[
-        { id:'none',    ico:'🔕', title:'No notification',    desc:'Leads are saved to your dashboard only.' },
-        { id:'email',   ico:'📧', title:'Email me',            desc:'Get an email for every new lead.' },
-        { id:'sms',     ico:'📱', title:'Text me (SMS)',        desc:'Get a text message via Twilio.' },
-        { id:'webhook', ico:'🔗', title:'Send to webhook',     desc:'POST lead data to your CRM or Zapier.' },
-        { id:'chatbot', ico:'🤖', title:'Email the client',    desc:'Auto-email the client their treatment plan.' },
+        { id:'none', ico:'🔕', title:'No notification', desc:'Leads are saved to your dashboard only.' },
+        { id:'sms',  ico:'📱', title:'SMS alert',        desc:'Get a text message for every new lead.' },
       ].map(o => `
       <div class="route-opt${rt===o.id?' selected':''}" onclick="selectRoute('${o.id}')">
         <div class="route-check">${rt===o.id?'✓':''}</div>
@@ -691,21 +688,6 @@ function renderRouting(m) {
 
     <div id="route-config"></div>
 
-    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:0.5px solid var(--border)">
-      <div class="card-title" style="margin-bottom:.5rem">Email lead alert <span style="font-size:11px;font-weight:500;color:var(--t3);letter-spacing:0">(optional · any routing type)</span></div>
-      <p style="font-size:13px;color:var(--t2);margin-bottom:.75rem;line-height:1.55">Get an email the moment a new lead comes in — regardless of which routing method is selected above.</p>
-      <label class="flbl">Your email address</label>
-      <input class="finp" id="rc-notify-email" value="${esc(rc.notificationEmail||'')}" placeholder="you@yourclinic.com" type="email">
-    </div>
-
-    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:0.5px solid var(--border)">
-      <div class="card-title" style="margin-bottom:.5rem">SMS lead alert <span style="font-size:11px;font-weight:500;color:var(--t3);letter-spacing:0">(optional · any routing type)</span></div>
-      <p style="font-size:13px;color:var(--t2);margin-bottom:.75rem;line-height:1.55">Get a text the moment a new lead comes in — regardless of which routing method is selected above.</p>
-      <label class="flbl">Your mobile number</label>
-      <input class="finp" id="rc-notify-phone" value="${esc(rc.notificationPhone||'')}" placeholder="+15550001234" type="tel">
-      <p style="font-size:11px;color:var(--t3);margin-top:.35rem">Requires <strong>TEXTBELT_KEY</strong> in your Railway Variables. Get a key at textbelt.com (~$0.04/text).</p>
-    </div>
-
     <div class="btn-row"><button class="btn-pri" onclick="saveRouting()">Save routing</button></div>
   </div>`;
 
@@ -713,16 +695,9 @@ function renderRouting(m) {
 }
 
 function selectRoute(id) {
-  document.querySelectorAll('.route-opt').forEach(el => {
-    const isThis = el.querySelector('.route-opt-title').textContent.toLowerCase().includes(id==='none'?'no':id);
-    el.classList.toggle('selected', false);
-    el.querySelector('.route-check').textContent = '';
-  });
-  // simpler — just re-render with new selection
   const w = getActiveWidget(); if (!w) return;
-  w._pendingRouteType = id;
   document.querySelectorAll('.route-opt').forEach((el, i) => {
-    const ids = ['none','email','sms','webhook','chatbot'];
+    const ids = ['none','sms'];
     el.classList.toggle('selected', ids[i] === id);
     el.querySelector('.route-check').textContent = ids[i] === id ? '✓' : '';
   });
@@ -733,36 +708,45 @@ function selectRoute(id) {
 function renderRouteConfig(type, rc) {
   const el = document.getElementById('route-config');
   if (!el) return;
-  const configs = {
-    none: '',
-    email: `<label class="flbl">Send notifications to this email</label>
-      <input class="finp" id="rc-email" value="${esc(rc.email||'')}" placeholder="provider@yourclinic.com" type="email">`,
-    sms: `<label class="flbl">Your phone number</label>
-      <input class="finp" id="rc-phone" value="${esc(rc.phone||'')}" placeholder="+15550001234">
-      <p style="font-size:11px;color:var(--t3);margin-top:.4rem">Requires <strong>TEXTBELT_KEY</strong> in your Railway Variables. Get a key at textbelt.com.</p>`,
-    webhook: `<label class="flbl">Webhook URL (we'll POST lead JSON here)</label>
-      <input class="finp" id="rc-url" value="${esc(rc.url||'')}" placeholder="https://hooks.zapier.com/...">
-      <p style="font-size:11px;color:var(--t3);margin-top:.4rem">Works with Zapier, Make, HubSpot, and any REST endpoint.</p>`,
-    chatbot: `<p style="font-size:13px;color:var(--t2);background:var(--ac-l);border-radius:8px;padding:10px 13px;margin-top:.5rem;line-height:1.65">
-      When this is on, every new lead will automatically receive an email with their personalized treatment plan and a link to book.<br><br>
-      <strong style="color:var(--ac-d)">Requires EMAIL_HOST, EMAIL_USER, and EMAIL_PASS to be set in your environment.</strong></p>`,
-  };
-  el.innerHTML = configs[type] || '';
+  el.innerHTML = type === 'sms' ? `
+    <label class="flbl" style="margin-top:1rem">Your mobile number</label>
+    <input class="finp" id="rc-phone" value="${esc(rc.phone||rc.notificationPhone||'')}" placeholder="+15550001234">
+    <p style="font-size:11px;color:var(--t3);margin-top:.35rem">Requires <strong>TEXTBELT_KEY</strong> in your Railway Variables. Get a key at textbelt.com (~$0.04/text).</p>
+  ` : '';
+}
+
+async function testNotifyEmail() {
+  const email = document.getElementById('rc-notify-email')?.value.trim();
+  const result = document.getElementById('test-email-result');
+  const btn = document.getElementById('btn-test-email');
+  if (!email) { result.style.display='block'; result.style.color='#c0392b'; result.textContent='Enter an email address first.'; return; }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  result.style.display = 'none';
+  try {
+    const r = await fetch(`/api/test-email/${encodeURIComponent(email)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await r.json();
+    if (data.ok) {
+      result.style.color = '#1a7a4a'; result.textContent = `✓ Test email sent to ${email} — check your inbox.`;
+    } else {
+      result.style.color = '#c0392b'; result.textContent = `Error (${r.status}): ${data.error || 'Unknown error'}`;
+    }
+  } catch (e) { result.style.color = '#c0392b'; result.textContent = `Request failed: ${e.message}`; }
+  result.style.display = 'block';
+  btn.disabled = false; btn.textContent = 'Send test';
 }
 
 async function saveRouting() {
   const w = getActiveWidget(); if (!w) return;
   const selectedEl = document.querySelector('.route-opt.selected');
   if (!selectedEl) return;
-  const ids = ['none','email','sms','webhook','chatbot'];
+  const ids = ['none','sms'];
   const typeIdx = Array.from(document.querySelectorAll('.route-opt')).indexOf(selectedEl);
   const routingType = ids[typeIdx] || 'none';
   const routingConfig = {
-    email:             document.getElementById('rc-email')?.value.trim()         || w.routingConfig?.email,
-    phone:             document.getElementById('rc-phone')?.value.trim()         || w.routingConfig?.phone,
-    url:               document.getElementById('rc-url')?.value.trim()           || w.routingConfig?.url,
-    notificationPhone: document.getElementById('rc-notify-phone')?.value.trim() || '',
-    notificationEmail: document.getElementById('rc-notify-email')?.value.trim() || '',
+    phone: document.getElementById('rc-phone')?.value.trim() || w.routingConfig?.phone || '',
+    notificationPhone: document.getElementById('rc-phone')?.value.trim() || '',
   };
   const res = await api('PUT', `/api/provider/widgets/${w.id}`, { routingType, routingConfig });
   if (res && !res.error) {
@@ -791,7 +775,8 @@ function renderLeadRow(l) {
       </div>
       <div class="lead-detail" id="ld-${l.id}">
         ${l.concerns?.length?`<div class="dl">Concerns</div><div class="dv">${(l.concerns||[]).map(c=>esc(c)).join(', ')}</div>`:''}
-        ${l.history?`<div class="dl">History</div><div class="dv">${esc(l.history)}</div>`:''}
+        ${l.history?.length?`<div class="dl">Aesthetic Experience</div><div class="dv">${(l.history||[]).map(h=>esc(h)).join(', ')}</div>`:''}
+        ${l.contactPref?`<div class="dl">Preferred Contact</div><div class="dv">${esc(l.contactPref)}</div>`:''}
         ${l.modalities?.length?`<div class="dl">AI Recommendations</div><div class="dv">${(l.modalities||[]).map(m=>esc(m)).join(', ')}</div>`:''}
         ${l.package?`<div class="dl">Package</div><div class="dv" style="font-weight:600;color:var(--ac-d)">${esc(l.package)}</div>`:''}
         ${l.analysis?`<div class="dl">AI Summary</div><div class="dv">${esc(l.analysis)}</div>`:''}
@@ -953,7 +938,7 @@ function renderBilling(m) {
       <div style="font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:.4rem">Starter</div>
       <div style="font-size:32px;font-weight:800;color:var(--t1);letter-spacing:-.02em;line-height:1">$97<span style="font-size:14px;font-weight:500;color:var(--t3)">/mo</span></div>
       <ul style="list-style:none;margin:1rem 0;display:flex;flex-direction:column;gap:.5rem">
-        ${['1 widget location','200 consultations / mo','Lead capture dashboard','AI treatment recommendations','Photo analysis','Custom branding'].map(f=>`<li style="font-size:13px;color:var(--t2);display:flex;gap:.5rem"><span style="color:var(--ac-m);font-weight:700">✓</span>${f}</li>`).join('')}
+        ${['1 widget location','200 consultations / mo','Goldie AI consultation widget','Lead capture dashboard','AI treatment recommendations','Photo analysis','Custom branding'].map(f=>`<li style="font-size:13px;color:var(--t2);display:flex;gap:.5rem"><span style="color:var(--ac-m);font-weight:700">✓</span>${f}</li>`).join('')}
       </ul>
       ${!isActive||isPro ? `<button class="btn-pri" style="width:100%" onclick="startCheckout('starter')">${isActive&&isPro?'Downgrade to Starter':'Subscribe — $97/mo'}</button>` : ''}
     </div>
@@ -964,13 +949,35 @@ function renderBilling(m) {
       <div style="font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:.4rem">Pro</div>
       <div style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1">$197<span style="font-size:14px;font-weight:500;color:rgba(255,255,255,.55)">/mo</span></div>
       <ul style="list-style:none;margin:1rem 0;display:flex;flex-direction:column;gap:.5rem">
-        ${['Up to 5 widget locations','Unlimited consultations','Everything in Starter','AI virtual concierge chat','CSV lead export','Priority support'].map(f=>`<li style="font-size:13px;color:rgba(255,255,255,.85);display:flex;gap:.5rem"><span style="color:var(--ac);font-weight:700">✓</span>${f}</li>`).join('')}
+        ${['Up to 5 widget locations','Unlimited consultations','Everything in Starter','CSV lead export','Priority support','New features first'].map(f=>`<li style="font-size:13px;color:rgba(255,255,255,.85);display:flex;gap:.5rem"><span style="color:var(--ac);font-weight:700">✓</span>${f}</li>`).join('')}
       </ul>
       ${!isActive||!isPro ? `<button style="width:100%;padding:11px;background:#fff;color:var(--ac-d);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .16s" onclick="startCheckout('pro')" onmouseover="this.style.background='var(--ac-l)'" onmouseout="this.style.background='#fff'">${isActive&&!isPro?'Upgrade to Pro':'Subscribe — $197/mo'}</button>` : ''}
     </div>
   </div>
 
-  <div style="font-size:12px;color:var(--t3);text-align:center">No contracts. Cancel anytime from the billing portal.</div>`;
+  <div style="font-size:12px;color:var(--t3);text-align:center">No contracts. Cancel anytime from the billing portal.</div>
+
+  <!-- Danger zone -->
+  <div class="card" style="margin-top:1.5rem;border-color:rgba(192,57,43,.2)">
+    <div class="card-title" style="color:#c0392b">Account</div>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      ${isActive ? `
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;padding-bottom:.75rem;border-bottom:0.5px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--t1)">Cancel subscription</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:.2rem">Your plan stays active until the end of the billing period.</div>
+        </div>
+        <button onclick="cancelSubscription()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(192,57,43,.4);background:#fff;color:#c0392b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Cancel plan</button>
+      </div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--t1)">Delete account</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:.2rem">Permanently deletes all your data. This cannot be undone.</div>
+        </div>
+        <button onclick="deleteAccount()" style="padding:8px 16px;border-radius:8px;border:none;background:#c0392b;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Delete account</button>
+      </div>
+    </div>
+  </div>`;
 }
 
 async function startCheckout(plan) {
@@ -990,6 +997,33 @@ async function openPortal() {
     else toast(res?.error || 'Could not open billing portal');
   } catch {
     toast('Could not connect to billing');
+  }
+}
+
+async function cancelSubscription() {
+  if (!confirm('Cancel your subscription? You\'ll keep access until the end of your current billing period.')) return;
+  const res = await api('POST', '/api/provider/cancel-subscription');
+  if (res?.ok) {
+    toast('Subscription cancelled. Access continues until end of billing period.');
+    provider.subscriptionStatus = 'canceled';
+    showTab('billing');
+  } else {
+    toast(res?.error || 'Could not cancel subscription');
+  }
+}
+
+async function deleteAccount() {
+  const confirm1 = confirm('Delete your account? This will permanently erase all your leads, widgets, and data.');
+  if (!confirm1) return;
+  const typed = prompt('Type DELETE to confirm:');
+  if (typed !== 'DELETE') { toast('Cancelled — account not deleted.'); return; }
+  const res = await api('DELETE', '/api/provider/me');
+  if (res?.ok) {
+    localStorage.removeItem('aiToken');
+    localStorage.removeItem('aiProvider');
+    window.location.href = '/';
+  } else {
+    toast(res?.error || 'Could not delete account');
   }
 }
 
@@ -1017,7 +1051,7 @@ async function renderTestimonial(m) {
   m.innerHTML = `
   <div class="page-hdr">
     <div class="page-title">Leave a Review</div>
-    <div class="page-sub">Love Hey, Maeve? Share your experience — approved reviews appear on our website.</div>
+    <div class="page-sub">Love Meet Goldie? Share your experience — approved reviews appear on our website.</div>
   </div>
   <div class="card" style="max-width:560px">
     <div id="testi-err" style="display:none;font-size:13px;color:#c0392b;background:#fff5f5;border-radius:8px;padding:10px 13px;margin-bottom:12px"></div>

@@ -55,6 +55,8 @@ async function init() {
 
 async function migrate() {
   await pool.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS photos TEXT DEFAULT '{}'`);
+  await pool.query(`ALTER TABLE providers ADD COLUMN IF NOT EXISTS npi TEXT DEFAULT ''`);
+  await pool.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_pref TEXT DEFAULT ''`);
   await pool.query(`CREATE TABLE IF NOT EXISTS testimonials (
     id TEXT PRIMARY KEY,
     provider_id TEXT NOT NULL REFERENCES providers(id),
@@ -102,22 +104,24 @@ function parseLead(l) {
     ...l,
     areas: JSON.parse(l.areas || '[]'),
     concerns: JSON.parse(l.concerns || '[]'),
+    history: (() => { try { const v = JSON.parse(l.history || '[]'); return Array.isArray(v) ? v : [v].filter(Boolean); } catch { return l.history ? [l.history] : []; } })(),
     modalities: JSON.parse(l.modalities || '[]'),
     photos: JSON.parse(l.photos || '{}'),
     hasPhotos: !!l.has_photos,
     skinQuality: l.skin_quality,
+    contactPref: l.contact_pref || '',
     capturedAt: l.captured_at,
   };
 }
 
 module.exports = {
-  async createProvider(email, passwordHash, clinicName) {
+  async createProvider(email, passwordHash, clinicName, npi) {
     const id = newId();
     const now = new Date().toISOString();
     const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
     await pool.query(
-      'INSERT INTO providers (id, email, password_hash, clinic_name, plan, subscription_status, trial_ends_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
-      [id, email.toLowerCase().trim(), passwordHash, clinicName, 'trial', 'trialing', trialEnd, now]
+      'INSERT INTO providers (id, email, password_hash, clinic_name, plan, subscription_status, trial_ends_at, created_at, npi) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [id, email.toLowerCase().trim(), passwordHash, clinicName, 'trial', 'trialing', trialEnd, now, npi || '']
     );
     const wid = newId();
     const code = newId();
@@ -210,15 +214,16 @@ module.exports = {
     const id = newId();
     const now = new Date().toISOString();
     await pool.query(
-      `INSERT INTO leads (id,provider_id,widget_code,fname,lname,email,phone,areas,concerns,history,budget,analysis,modalities,package,has_photos,skin_quality,photos,captured_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+      `INSERT INTO leads (id,provider_id,widget_code,fname,lname,email,phone,areas,concerns,history,budget,analysis,modalities,package,has_photos,skin_quality,photos,captured_at,contact_pref)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
       [id, lead.providerId, lead.widgetCode,
        lead.fname||'', lead.lname||'', lead.email||'', lead.phone||'',
        JSON.stringify(lead.areas||[]), JSON.stringify(lead.concerns||[]),
-       lead.history||'', lead.budget||'', lead.analysis||'',
+       JSON.stringify(Array.isArray(lead.history) ? lead.history : (lead.history ? [lead.history] : [])),
+       lead.budget||'', lead.analysis||'',
        JSON.stringify(lead.modalities||[]), lead.package||'',
        lead.hasPhotos ? 1 : 0, lead.skinQuality||'',
-       JSON.stringify(lead.photos||{}), now]
+       JSON.stringify(lead.photos||{}), now, lead.contactPref||'']
     );
     const { rows } = await pool.query('SELECT * FROM leads WHERE id = $1', [id]);
     return parseLead(rows[0]);
@@ -227,6 +232,21 @@ module.exports = {
   async getLeadsByProvider(providerId) {
     const { rows } = await pool.query('SELECT * FROM leads WHERE provider_id = $1 ORDER BY captured_at DESC', [providerId]);
     return rows.map(parseLead);
+  },
+
+  async deleteLeadById(id) {
+    await pool.query('DELETE FROM leads WHERE id = $1', [id]);
+  },
+
+  async getMonthlyLeadCount(providerId) {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const { rows } = await pool.query(
+      'SELECT COUNT(*) as count FROM leads WHERE provider_id = $1 AND captured_at >= $2',
+      [providerId, startOfMonth.toISOString()]
+    );
+    return parseInt(rows[0].count, 10);
   },
 
   async submitTestimonial(providerId, { clinicName, authorName, authorRole, content }) {
@@ -273,6 +293,13 @@ module.exports = {
       ORDER BY p.created_at DESC
     `);
     return rows;
+  },
+
+  async deleteProvider(id) {
+    await pool.query('DELETE FROM leads WHERE provider_id = $1', [id]);
+    await pool.query('DELETE FROM testimonials WHERE provider_id = $1', [id]);
+    await pool.query('DELETE FROM widgets WHERE provider_id = $1', [id]);
+    await pool.query('DELETE FROM providers WHERE id = $1', [id]);
   },
 
   async getAllLeads() {
