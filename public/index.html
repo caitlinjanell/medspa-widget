@@ -202,11 +202,14 @@ async function loadConfig() {
   if (WIDGET_CODE) {
     try {
       const res = await fetch(`/api/widget-config/${WIDGET_CODE}`);
-      if (res.ok) applyConfig(await res.json());
+      if (res.ok) { applyConfig(await res.json()); return true; }
+      const data = await res.json().catch(() => ({}));
+      if (data.error === 'subscription_inactive') return false;
     } catch {}
   } else {
     applyConfig(DEFAULTS);
   }
+  return true;
 }
 
 // Use overridable arrays (populated from config)
@@ -220,7 +223,7 @@ function getBudget()   { return window._BUDGET   || DEFAULTS.budget; }
 // ─────────────────────────────────────────────
 const S = {
   step:1, areas:[], concerns:[], history:'', budget:'',
-  fname:'', lname:'', email:'', phone:'',
+  fname:'', lname:'', email:'', phone:'', contactPref:'',
   photos:{front:null,left:null,right:null,smile:null},
   pa:null,
   results:null, leadSaved:false,
@@ -262,7 +265,7 @@ function ck() {
     2: S.concerns.length > 0,
     3: S.history && S.budget,
     4: Object.values(S.photos).some(v => v),
-    5: S.fname && S.lname && S.email && validEmail(S.email) && S.phone,
+    5: S.fname && S.lname && S.email && validEmail(S.email) && S.phone && S.contactPref,
   }[S.step]);
 }
 
@@ -339,8 +342,8 @@ const STEPS = {
   3: () => `
     <div class="eye">Step 3 of 5</div>
     <div class="ttl">A little background</div>
-    <div class="sub">Help us personalize your results.</div>
-    <div class="glbl">Treatment history</div>
+    <div class="sub">Help us personalize your experience.</div>
+    <div class="glbl">Aesthetic experience</div>
     <div class="chips">
       ${getHistory().map(h => `<button class="chip${S.history===h?' on':''}" data-g="history" onclick="solo(this,'${h}','history')">${h}</button>`).join('')}
     </div>
@@ -360,7 +363,7 @@ const STEPS = {
     <div class="sub">At least one photo required. All four gives the best results.</div>
     <div class="ibox">
       <span style="font-size:15px;margin-top:1px">🔒</span>
-      <span class="ibox-t">Your photos are encrypted and stored securely. They are accessible only to ${CLINIC.name}'s licensed medical providers as part of your pre-consultation record, and will not be used for any other purpose.</span>
+      <span class="ibox-t">Your photos are used only to personalize your aesthetic consultation experience at ${CLINIC.name}. They are not stored as medical records and are not shared with third parties.</span>
     </div>
     <div class="pgrid">
       ${SLOTS.map(sl => `
@@ -394,13 +397,19 @@ const STEPS = {
       <input class="finp" id="iem" type="email" value="${S.email}" placeholder="ava@example.com" oninput="fset('iem','email')">
     </div>
     <div class="frow">
-      <label class="flbl">Phone <span style="color:var(--t3);font-weight:400">(optional)</span></label>
+      <label class="flbl">Phone</label>
       <input class="finp" id="iph" value="${S.phone}" placeholder="(555) 000-0000" oninput="S.phone=this.value.trim();ck()">
+    </div>
+    <div class="frow">
+      <label class="flbl">Preferred contact method</label>
+      <div class="chips" style="margin-top:4px">
+        ${['Text','Email','Call'].map(opt => `<button class="chip${S.contactPref===opt?' on':''}" data-g="contactPref" onclick="solo(this,'${opt}','contactPref')">${opt}</button>`).join('')}
+      </div>
     </div>
     <div class="disc">🔒 Your information is kept confidential and only shared with ${CLINIC.name}'s licensed providers.</div>
     <div style="margin-top:1rem">
       <button class="btn gho" onclick="go(4)">← Back</button>
-      <button class="btn pri" id="nb" onclick="analyze()" ${S.fname&&S.lname&&S.email&&validEmail(S.email)&&S.phone?'':'disabled'}>Unlock my results →</button>
+      <button class="btn pri" id="nb" onclick="analyze()" ${S.fname&&S.lname&&S.email&&validEmail(S.email)&&S.phone&&S.contactPref?'':'disabled'}>Unlock my results →</button>
     </div>`,
 };
 
@@ -464,7 +473,7 @@ async function analyze() {
       }
       content.push({
         type: 'text',
-        text: `You are an expert aesthetic medical analyst reviewing ${photoEntries.length} facial photo(s): ${photoEntries.map(s => s.l).join(', ')}.\n\nAnalyze observable surface characteristics only (skin texture, tone, volume distribution, symmetry, line patterns). Do NOT diagnose medical conditions.\n\nRespond with ONLY a JSON object, no other text:\n{"visualObservations":"2-3 sentence clinical description","photoInformedAreas":["specific","focus","areas"],"skinQualityScore":"Excellent or Good or Fair","photoNotes":"1 sentence about photo quality for the provider"}`,
+        text: `You are an expert aesthetic consultant reviewing ${photoEntries.length} facial photo(s): ${photoEntries.map(s => s.l).join(', ')}.\n\nObserve visible surface characteristics only (skin texture, tone, volume distribution, symmetry, line patterns). This is for aesthetic consultation personalization, not medical diagnosis.\n\nRespond with ONLY a JSON object, no other text:\n{"visualObservations":"2-3 sentence aesthetic observation","photoInformedAreas":["specific","focus","areas"],"skinQualityScore":"Excellent or Good or Fair","photoNotes":"1 sentence about photo quality for the provider"}`,
       });
       pa = await callAPI([{ role: 'user', content }], 600);
       S.pa = pa;
@@ -487,7 +496,7 @@ async function analyze() {
     ? `Recommend all clinically relevant treatments from the list above. Start with what the client specifically requested, then add any additional treatments from the list that your full assessment indicates would benefit them — even if they didn't mention that area. Aim for 3–6 recommendations. Use the exact treatment names provided.`
     : `Recommend 3–6 modalities based on a complete facial assessment, addressing both what the client mentioned and any additional areas you identify clinically.`;
 
-  const prompt = `You are an expert aesthetic medical consultant conducting a comprehensive full-face pre-consultation assessment.\n\nClient profile:\n- Areas of interest: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Treatment history: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "3-4 sentence full facial assessment — acknowledge the client's stated goals, then describe your complete clinical findings across the face (volume, laxity, texture, symmetry, skin quality). Identify any areas beyond what the client mentioned that would benefit from treatment. Explain how the full recommended plan addresses their goals and your findings. ${pa ? 'Integrate visual findings from photos.' : ''}",\n  "recommendedModalities": [\n    {\n      "name": "exact treatment name from the clinic list",\n      "why": "1-2 sentence clinical rationale — tie it to either the client's stated goal or your clinical assessment findings",\n      "expectedLongevity": "typical duration",\n      "estimatedCost": "patient-specific cost estimate accounting for typical units/syringes/sessions needed (e.g. $480–$640, approx. 40 units)"\n    }\n  ],\n  "totalEstimate": {\n    "range": "combined low–high range across all recommended treatments (e.g. $2,400–$3,800)",\n    "note": "1 sentence framing the investment in context of outcomes and longevity"\n  }\n}\nTone: clinical, warm, high-end medspa. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with' or 'our assessment suggests'. ${txInstruction}`;
+  const prompt = `You are Goldie, an expert aesthetic consultant personalizing a pre-consultation experience for a prospective client.\n\nClient profile:\n- Areas of interest: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Aesthetic experience: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nThis is a consultation preference tool, not a medical assessment. Provide personalized aesthetic guidance only.\n\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "3-4 sentence personalized aesthetic overview — acknowledge the client's goals, describe relevant aesthetic observations across the face (volume, texture, symmetry, skin quality). Suggest areas that may benefit from treatment. Explain how the recommended plan aligns with their goals. ${pa ? 'Incorporate observations from the photos provided.' : ''}",\n  "recommendedModalities": [\n    {\n      "name": "exact treatment name from the clinic list",\n      "why": "1-2 sentence rationale — tie it to the client's stated goals or aesthetic observations",\n      "expectedLongevity": "typical duration",\n      "estimatedCost": "estimated investment range for this treatment (e.g. $480–$640, approx. 40 units)"\n    }\n  ],\n  "totalEstimate": {\n    "range": "combined low–high range across all recommended treatments (e.g. $2,400–$3,800)",\n    "note": "1 sentence framing the investment in context of outcomes and longevity"\n  }\n}\nTone: warm, personalized, high-end medspa. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with' or 'based on your goals'. ${txInstruction}`;
 
   try {
     const d = await callAPI([{ role: 'user', content: prompt }], 1000);
@@ -504,11 +513,11 @@ async function saveLead(d) {
   if (S.leadSaved) return;
   S.leadSaved = true;
   try {
-    await fetch('/api/leads', {
+    const res = await fetch('/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        fname: S.fname, lname: S.lname, email: S.email, phone: S.phone || '',
+        fname: S.fname, lname: S.lname, email: S.email, phone: S.phone, contactPref: S.contactPref,
         areas: S.areas, concerns: S.concerns, history: S.history, budget: S.budget,
         analysis: d.analysis || '',
         modalities: (d.recommendedModalities || []).map(m => m.name),
@@ -519,8 +528,35 @@ async function saveLead(d) {
         widgetCode: WIDGET_CODE || null,
       }),
     });
+    const data = await res.json();
+    if (data.leadId) S.leadId = data.leadId;
   } catch (err) {
     console.warn('Lead save failed (non-critical):', err.message);
+  }
+}
+
+async function deleteMyData() {
+  const btn = document.getElementById('delete-data-btn');
+  const status = document.getElementById('delete-data-status');
+  if (!S.leadId) {
+    status.textContent = 'No data on file for this session.';
+    status.style.color = 'var(--t3)';
+    status.style.display = 'block';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    await fetch(`/api/leads/${S.leadId}`, { method: 'DELETE' });
+    S.leadId = null;
+    btn.style.display = 'none';
+    status.textContent = '✓ Your data has been deleted. The practice has not received your information.';
+    status.style.color = '#1a7a4a';
+    status.style.display = 'block';
+  } catch {
+    btn.disabled = false; btn.textContent = 'Delete my data';
+    status.textContent = 'Could not delete. Please try again.';
+    status.style.color = '#c0392b';
+    status.style.display = 'block';
   }
 }
 
@@ -538,17 +574,17 @@ function showResult(d) {
 
   // Build VA system prompt
   const mods = d.recommendedModalities || [];
-  S.chatSys = `You are Goldie, the AI aesthetic consultant for ${CLINIC.name}, a premium medical aesthetics practice. You have just completed a pre-consultation with ${S.fname} ${S.lname} and generated their personalized treatment plan.
+  S.chatSys = `You are Goldie, the AI aesthetic guide for ${CLINIC.name}. You have just completed a personalized pre-consultation experience with ${S.fname} ${S.lname}.
 
 Client profile:
 - Name: ${S.fname} ${S.lname}
 - Areas of interest: ${S.areas.join(', ')}
 - Primary concerns: ${S.concerns.join(', ')}
-- Treatment history: ${S.history}
+- Aesthetic experience: ${S.history}
 - Investment comfort zone: ${S.budget}
-${S.pa ? `- Visual assessment: ${S.pa.visualObservations} (Skin quality: ${S.pa.skinQualityScore})` : ''}
+${S.pa ? `- Visual observations: ${S.pa.visualObservations} (Skin quality: ${S.pa.skinQualityScore})` : ''}
 
-Clinical summary: ${d.analysis || ''}
+Consultation summary: ${d.analysis || ''}
 
 Recommended treatments:
 ${mods.map((m, i) => { const p = m.estimatedCost || txPrice(m.name); return `${i + 1}. ${m.name}${p ? ` (${p})` : ''}: ${m.why} (Typical longevity: ${m.expectedLongevity})`; }).join('\n')}
@@ -636,7 +672,11 @@ Your role as Goldie, ${CLINIC.name}'s AI consultant:
     <button class="btn gho" onclick="window.open('${CLINIC.bookingUrl}','_blank')">
       Book my consultation at ${esc(CLINIC.name)} →
     </button>
-    <div class="disc" style="margin-top:.8rem">This tool does not provide medical advice. Photo analysis is non-diagnostic. All recommendations are subject to in-person clinical evaluation by a licensed provider. Individual results vary.</div>
+    <div class="disc" style="margin-top:.8rem">This tool collects aesthetic preferences to personalize your consultation experience. It does not provide medical advice, create a medical record, or establish a provider-patient relationship. All treatment decisions are made by your licensed provider in person.</div>
+    <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);text-align:center">
+      <button id="delete-data-btn" onclick="deleteMyData()" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Delete my data</button>
+      <div id="delete-data-status" style="font-size:11px;margin-top:.35rem;display:none;line-height:1.5"></div>
+    </div>
   </div>`;
 }
 
@@ -663,7 +703,7 @@ function openChat() {
       oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
     <button class="chat-send" id="csend" onclick="sendChatMsg()">Send</button>
   </div>
-  <div class="chat-legal">AI responses are informational only. Consult a licensed provider for medical advice.</div>`;
+  <div class="chat-legal">Goldie provides aesthetic guidance only — not medical advice. No provider-patient relationship is created by this tool.</div>`;
   renderChatMsgs();
   setTimeout(() => { const i = $('cinp'); if (i) i.focus(); }, 50);
 }
@@ -739,7 +779,7 @@ function showError(msg) {
 }
 
 // Boot — load config then start
-loadConfig().then(() => go(1));
+loadConfig().then(ok => { if (ok) go(1); });
 </script>
 </body>
 </html>
