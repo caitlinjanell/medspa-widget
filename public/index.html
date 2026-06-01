@@ -222,7 +222,7 @@ function getBudget()   { return window._BUDGET   || DEFAULTS.budget; }
 //  App state
 // ─────────────────────────────────────────────
 const S = {
-  step:1, areas:[], concerns:[], history:'', budget:'',
+  step:1, areas:[], concerns:[], history:[], budget:'',
   fname:'', lname:'', email:'', phone:'', contactPref:'',
   photos:{front:null,left:null,right:null,smile:null},
   pa:null,
@@ -263,7 +263,7 @@ function ck() {
   btn.disabled = !({
     1: S.areas.length > 0,
     2: S.concerns.length > 0,
-    3: S.history && S.budget,
+    3: S.history.length > 0 && S.budget,
     4: Object.values(S.photos).some(v => v),
     5: S.fname && S.lname && S.email && validEmail(S.email) && S.phone && S.contactPref,
   }[S.step]);
@@ -343,16 +343,16 @@ const STEPS = {
     <div class="eye">Step 3 of 5</div>
     <div class="ttl">A little background</div>
     <div class="sub">Help us personalize your experience.</div>
-    <div class="glbl">Aesthetic experience</div>
+    <div class="glbl">Aesthetic experience <span style="color:var(--t3);font-weight:400;font-size:12px">(select all that apply)</span></div>
     <div class="chips">
-      ${getHistory().map(h => `<button class="chip${S.history===h?' on':''}" data-g="history" onclick="solo(this,'${h}','history')">${h}</button>`).join('')}
+      ${getHistory().map(h => `<button class="chip${S.history.includes(h)?' on':''}" onclick="tog(this,'${h}','history')">${h}</button>`).join('')}
     </div>
     <div class="glbl" style="margin-top:4px">Investment comfort zone</div>
     <div class="chips">
       ${getBudget().map(b => `<button class="chip${S.budget===b?' on':''}" data-g="budget" onclick="solo(this,'${b}','budget')">${b}</button>`).join('')}
     </div>
     <button class="btn gho" onclick="go(2)">← Back</button>
-    <button class="btn pri" id="nb" onclick="go(4)" ${S.history&&S.budget?'':'disabled'}>Continue</button>`,
+    <button class="btn pri" id="nb" onclick="go(4)" ${S.history.length>0&&S.budget?'':'disabled'}>Continue</button>`,
 
   4: () => {
     setTimeout(() => { drawSlots(); ck(); }, 0);
@@ -496,7 +496,7 @@ async function analyze() {
     ? `Recommend all clinically relevant treatments from the list above. Start with what the client specifically requested, then add any additional treatments from the list that your full assessment indicates would benefit them — even if they didn't mention that area. Aim for 3–6 recommendations. Use the exact treatment names provided.`
     : `Recommend 3–6 modalities based on a complete facial assessment, addressing both what the client mentioned and any additional areas you identify clinically.`;
 
-  const prompt = `You are Goldie, an expert aesthetic consultant personalizing a pre-consultation experience for a prospective client.\n\nClient profile:\n- Areas of interest: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Aesthetic experience: ${S.history}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nThis is a consultation preference tool, not a medical assessment. Provide personalized aesthetic guidance only.\n\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "3-4 sentence personalized aesthetic overview — acknowledge the client's goals, describe relevant aesthetic observations across the face (volume, texture, symmetry, skin quality). Suggest areas that may benefit from treatment. Explain how the recommended plan aligns with their goals. ${pa ? 'Incorporate observations from the photos provided.' : ''}",\n  "recommendedModalities": [\n    {\n      "name": "exact treatment name from the clinic list",\n      "why": "1-2 sentence rationale — tie it to the client's stated goals or aesthetic observations",\n      "expectedLongevity": "typical duration",\n      "estimatedCost": "estimated investment range for this treatment (e.g. $480–$640, approx. 40 units)"\n    }\n  ],\n  "totalEstimate": {\n    "range": "combined low–high range across all recommended treatments (e.g. $2,400–$3,800)",\n    "note": "1 sentence framing the investment in context of outcomes and longevity"\n  }\n}\nTone: warm, personalized, high-end medspa. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with' or 'based on your goals'. ${txInstruction}`;
+  const prompt = `You are Goldie, an expert aesthetic consultant personalizing a pre-consultation experience for a prospective client.\n\nClient profile:\n- Areas of interest: ${S.areas.join(', ')}\n- Primary concerns: ${S.concerns.join(', ')}\n- Aesthetic experience: ${S.history.join(', ')}\n- Investment comfort zone: ${S.budget}${photoCtx}${txListStr}\nThis is a consultation preference tool, not a medical assessment. Provide personalized aesthetic guidance only.\n\nRespond with ONLY a JSON object, no other text:\n{\n  "analysis": "3-4 sentence personalized aesthetic overview — acknowledge the client's goals, describe relevant aesthetic observations across the face (volume, texture, symmetry, skin quality). Suggest areas that may benefit from treatment. Explain how the recommended plan aligns with their goals. ${pa ? 'Incorporate observations from the photos provided.' : ''}",\n  "recommendedModalities": [\n    {\n      "name": "exact treatment name from the clinic list",\n      "why": "1-2 sentence rationale — tie it to the client's stated goals or aesthetic observations",\n      "expectedLongevity": "typical duration",\n      "estimatedCost": "estimated investment range for this treatment (e.g. $480–$640, approx. 40 units)"\n    }\n  ],\n  "totalEstimate": {\n    "range": "combined low–high range across all recommended treatments (e.g. $2,400–$3,800)",\n    "note": "1 sentence framing the investment in context of outcomes and longevity"\n  }\n}\nTone: warm, personalized, high-end medspa. Never guarantee results. Use phrases like 'commonly recommended' or 'aligns well with' or 'based on your goals'. ${txInstruction}`;
 
   try {
     const d = await callAPI([{ role: 'user', content: prompt }], 1000);
@@ -580,7 +580,7 @@ Client profile:
 - Name: ${S.fname} ${S.lname}
 - Areas of interest: ${S.areas.join(', ')}
 - Primary concerns: ${S.concerns.join(', ')}
-- Aesthetic experience: ${S.history}
+- Aesthetic experience: ${S.history.join(', ')}
 - Investment comfort zone: ${S.budget}
 ${S.pa ? `- Visual observations: ${S.pa.visualObservations} (Skin quality: ${S.pa.skinQualityScore})` : ''}
 
