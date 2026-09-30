@@ -12,6 +12,21 @@ const db = require('./db');
 const stripe = process.env.STRIPE_SECRET_KEY ? Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const app = express();
+
+// Express 4 doesn't catch errors thrown by async route handlers, so a database
+// hiccup in any route crashed the whole server. Wrap every route handler so
+// rejected promises go to the error handler at the bottom of this file instead.
+for (const method of ['get', 'post', 'put', 'delete']) {
+  const original = app[method].bind(app);
+  app[method] = (path, ...handlers) => {
+    if (!handlers.length) return original(path); // app.get('setting')
+    return original(path, ...handlers.map(h =>
+      typeof h === 'function' && h.length < 4
+        ? (req, res, next) => Promise.resolve(h(req, res, next)).catch(next)
+        : h
+    ));
+  };
+}
 const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
 if (!apiKey) console.error('ERROR: ANTHROPIC_API_KEY is not set');
 const claude = new Anthropic({ apiKey });
@@ -695,6 +710,18 @@ async function purgeOldPhotos() {
 }
 setTimeout(purgeOldPhotos, 60 * 1000);
 setInterval(purgeOldPhotos, 24 * 60 * 60 * 1000);
+
+// ── Error handling ──
+app.use((err, req, res, next) => {
+  console.error(`Unhandled error on ${req.method} ${req.path}:`, err.message);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Something went wrong. Please try again.' });
+});
+
+// Log background failures (e.g. fire-and-forget alerts) instead of crashing
+process.on('unhandledRejection', err => {
+  console.error('Unhandled promise rejection:', err?.message || err);
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
