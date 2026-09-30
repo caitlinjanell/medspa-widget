@@ -202,6 +202,14 @@ function applyConfig(cfg) {
   if (ftr) ftr.textContent = (cfg.poweredBy||CLINIC.poweredBy) + ' · Confidential & Secure';
 }
 
+// Booking links saved without "https://" would otherwise resolve against meetgoldie.com
+function normalizeUrl(u) {
+  u = String(u || '').trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, '');
+  try { const url = new URL(u); return /^https?:$/.test(url.protocol) ? url.href : ''; } catch { return ''; }
+}
+
 async function loadConfig() {
   if (WIDGET_CODE) {
     try {
@@ -367,7 +375,7 @@ const STEPS = {
     <div class="sub">At least one photo required. All four gives the best results.</div>
     <div class="ibox">
       <span style="font-size:15px;margin-top:1px">🔒</span>
-      <span class="ibox-t">Your photos are analyzed by AI to personalize your consultation and shared only with ${CLINIC.name}. They are automatically deleted after 14 days. <a href="/privacy" target="_blank" rel="noopener" style="color:inherit">Privacy Policy</a></span>
+      <span class="ibox-t">Your photos are analyzed by AI to personalize your consultation and shared only with ${CLINIC.name}. They are stored securely for 14 days, then automatically deleted. <a href="/privacy" target="_blank" rel="noopener" style="color:inherit">Privacy Policy</a></span>
     </div>
     <div class="pgrid">
       ${SLOTS.map(sl => `
@@ -380,7 +388,7 @@ const STEPS = {
     </div>
     <label class="consent" for="photo-consent">
       <input type="checkbox" id="photo-consent" ${S.photoConsent ? 'checked' : ''} onchange="S.photoConsent=this.checked;ck()">
-      <span>I agree that my photos may be analyzed by AI to personalize my consultation and shared with ${CLINIC.name}. I understand this is not medical advice.</span>
+      <span>I agree that my photos may be analyzed by AI, shared with ${CLINIC.name}, and stored for 14 days before being automatically deleted. I understand this is not medical advice.</span>
     </label>
     <button class="btn gho" onclick="go(3)">← Back</button>
     <button class="btn pri" id="nb" onclick="go(5)" disabled>Continue</button>`;
@@ -679,9 +687,10 @@ Your role as Goldie, ${CLINIC.name}'s AI consultant:
     <button class="btn pri" onclick="openChat()" style="margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">
       <span>💬</span> Chat with Goldie
     </button>
-    <button class="btn gho" onclick="window.open('${CLINIC.bookingUrl}','_blank')">
+    ${normalizeUrl(CLINIC.bookingUrl) ? `<a class="btn gho" href="${esc(normalizeUrl(CLINIC.bookingUrl))}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">
       Book my consultation at ${esc(CLINIC.name)} →
-    </button>
+    </a>` : ''}
+    ${S.email ? `<div class="disc" style="margin-top:.6rem;text-align:center">A copy of your results has been sent to ${esc(S.email)}.</div>` : ''}
     <div class="disc" style="margin-top:.8rem">This tool collects aesthetic preferences to personalize your consultation experience. It does not provide medical advice, create a medical record, or establish a provider-patient relationship. All treatment decisions are made by your licensed provider in person.</div>
     <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);text-align:center">
       <button id="delete-data-btn" onclick="deleteMyData()" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Delete my data</button>

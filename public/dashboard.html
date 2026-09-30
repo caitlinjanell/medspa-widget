@@ -616,7 +616,10 @@ async function saveBranding() {
   const color = document.getElementById('w-color').value;
   const newClinicName = document.getElementById('w-name').value.trim();
   w.config.clinicName   = newClinicName;
-  w.config.bookingUrl   = document.getElementById('w-booking').value.trim();
+  let booking = document.getElementById('w-booking').value.trim();
+  if (booking && !/^https?:\/\//i.test(booking)) booking = 'https://' + booking.replace(/^\/+/, '');
+  document.getElementById('w-booking').value = booking;
+  w.config.bookingUrl   = booking;
   w.config.logoUrl      = document.getElementById('w-logo').value.trim();
   w.config.accent       = color;
   w.config.accentLight  = color + '33';
