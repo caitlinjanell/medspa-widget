@@ -690,7 +690,6 @@ Your role as Goldie, ${CLINIC.name}'s AI consultant:
     ${normalizeUrl(CLINIC.bookingUrl) ? `<a class="btn gho" href="${esc(normalizeUrl(CLINIC.bookingUrl))}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">
       Book my consultation at ${esc(CLINIC.name)} →
     </a>` : ''}
-    ${S.email ? `<div class="disc" style="margin-top:.6rem;text-align:center">A copy of your results has been sent to ${esc(S.email)}.</div>` : ''}
     <div class="disc" style="margin-top:.8rem">This tool collects aesthetic preferences to personalize your consultation experience. It does not provide medical advice, create a medical record, or establish a provider-patient relationship. All treatment decisions are made by your licensed provider in person.</div>
     <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);text-align:center">
       <button id="delete-data-btn" onclick="deleteMyData()" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Delete my data</button>

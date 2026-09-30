@@ -273,44 +273,6 @@ function sendLeadAlert(to, lead, widget) {
   });
 }
 
-// Clinics sometimes enter booking links without a scheme ("dot.cards/abc"), which
-// browsers treat as a path on our own domain. Always return an absolute http(s) URL or ''.
-function normalizeUrl(u) {
-  u = String(u || '').trim();
-  if (!u) return '';
-  if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, '');
-  try {
-    const url = new URL(u);
-    return /^https?:$/.test(url.protocol) ? url.href : '';
-  } catch {
-    return '';
-  }
-}
-
-// ── Patient results email (sent for every lead, independent of clinic routing) ──
-function sendPatientResults(lead, widget) {
-  if (!lead.email) return Promise.resolve();
-  const clinic = widget?.config?.clinicName || 'your clinic';
-  const bookingUrl = normalizeUrl(widget?.config?.bookingUrl);
-  const mods = escHtml((lead.modalities || []).join(', '));
-  return sendEmail({
-    to: lead.email,
-    subject: `Your personalized treatment plan from ${clinic}`,
-    html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
-        <h2 style="color:#3C3489">Hi ${escHtml(lead.fname)},</h2>
-        <p style="color:#555;line-height:1.6">Thank you for completing your pre-consultation with ${escHtml(clinic)}. Here's a summary of your personalized treatment plan.</p>
-        <div style="background:#EEEDFE;border-radius:12px;padding:16px 20px;margin:20px 0">
-          <p style="color:#3C3489;font-size:13px;line-height:1.7">${escHtml(lead.analysis)}</p>
-        </div>
-        ${mods ? `<p style="color:#555"><strong>Recommended treatments:</strong> ${mods}</p>` : ''}
-        ${lead.package ? `<p style="color:#555"><strong>Investment package:</strong> ${escHtml(lead.package)}</p>` : ''}
-        ${bookingUrl ? `<p style="color:#555;margin-top:24px">We look forward to seeing you in person. <a href="${escHtml(bookingUrl)}" style="color:#7c5ca8;font-weight:600">Book your consultation →</a></p>` : ''}
-        <p style="color:#6b6b6b;font-size:12px;margin-top:32px">This is not medical advice. All recommendations are subject to in-person evaluation by a licensed provider. Your photos are automatically deleted 14 days after submission.</p>
-      </div>`,
-  });
-}
-
 // ── Lead routing ──
 async function routeLead(lead, widget) {
   const type = widget.routing_type;
@@ -638,7 +600,6 @@ app.post('/api/leads', leadLimiter, async (req, res) => {
 
     // Route the lead (fire and forget)
     if (widget) routeLead(lead, widget).catch(err => console.warn('Routing error:', err.message));
-    sendPatientResults(lead, widget).catch(err => console.warn('Patient email error:', err.message));
 
     res.json({ ok: true, leadId: lead.id });
   } catch (err) {
