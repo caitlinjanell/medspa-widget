@@ -9,7 +9,7 @@
 :root{
   --ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;
   --bg:#ffffff;--bg2:#FAF7F2;--border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
-  --t1:#1a1a1a;--t2:#555;--t3:#999;
+  --t1:#1a1a1a;--t2:#555;--t3:#6b6b6b;
   --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;
 }
 body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(150deg,#EDE5D8 0%,#F5EDE2 60%,#EEE6DA 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
@@ -115,6 +115,8 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 .chat-legal{font-size:10px;color:var(--t3);text-align:center;padding:.5rem 1.2rem;border-top:0.5px solid var(--border);background:var(--bg2);line-height:1.5}
 
 @media(max-width:480px){body{padding:0;align-items:flex-start;background:var(--bg)}.shell{border-radius:0;box-shadow:none;min-height:100vh}.fgrid{grid-template-columns:1fr}}
+:focus-visible{outline:2px solid #3C3489!important;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -384,20 +386,20 @@ const STEPS = {
     <div class="sub">Enter your details to unlock your custom treatment path.</div>
     <div class="fgrid">
       <div class="frow">
-        <label class="flbl">First name</label>
+        <label for="ifn" class="flbl">First name</label>
         <input class="finp" id="ifn" value="${S.fname}" placeholder="Ava" oninput="fset('ifn','fname')">
       </div>
       <div class="frow">
-        <label class="flbl">Last name</label>
+        <label for="iln" class="flbl">Last name</label>
         <input class="finp" id="iln" value="${S.lname}" placeholder="Chen" oninput="fset('iln','lname')">
       </div>
     </div>
     <div class="frow">
-      <label class="flbl">Email</label>
+      <label for="iem" class="flbl">Email</label>
       <input class="finp" id="iem" type="email" value="${S.email}" placeholder="ava@example.com" oninput="fset('iem','email')">
     </div>
     <div class="frow">
-      <label class="flbl">Phone</label>
+      <label for="iph" class="flbl">Phone</label>
       <input class="finp" id="iph" value="${S.phone}" placeholder="(555) 000-0000" oninput="S.phone=this.value.trim();ck()">
     </div>
     <div class="frow">
@@ -676,7 +678,7 @@ Your role as Goldie, ${CLINIC.name}'s AI consultant:
     <div class="disc" style="margin-top:.8rem">This tool collects aesthetic preferences to personalize your consultation experience. It does not provide medical advice, create a medical record, or establish a provider-patient relationship. All treatment decisions are made by your licensed provider in person.</div>
     <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);text-align:center">
       <button id="delete-data-btn" onclick="deleteMyData()" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Delete my data</button>
-      <div id="delete-data-status" style="font-size:11px;margin-top:.35rem;display:none;line-height:1.5"></div>
+      <div id="delete-data-status" role="status" aria-live="polite" style="font-size:11px;margin-top:.35rem;display:none;line-height:1.5"></div>
     </div>
   </div>`;
 }

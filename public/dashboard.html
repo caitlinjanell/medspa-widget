@@ -7,7 +7,7 @@
 <title>Dashboard · Meet Goldie</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#999}
+:root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--t1:#1a1a1a;--t2:#555;--t3:#6b6b6b}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg2);min-height:100vh;color:var(--t1);-webkit-font-smoothing:antialiased}
 
 /* ── Layout ── */
@@ -143,6 +143,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   .fgrid,.fgrid-3{grid-template-columns:1fr}
   .route-options{grid-template-columns:1fr}
 }
+:focus-visible{outline:2px solid #3C3489!important;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -188,7 +190,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   </main>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 window.onerror = function(msg, src, line) {
@@ -385,20 +387,20 @@ function renderWidget(m) {
     <div class="card-title">🎨 Branding</div>
     <div class="fgrid">
       <div>
-        <label class="flbl">Clinic name</label>
+        <label for="w-name" class="flbl">Clinic name</label>
         <input class="finp" id="w-name" value="${esc(c.clinicName||'')}">
       </div>
       <div>
-        <label class="flbl">Booking URL</label>
+        <label for="w-booking" class="flbl">Booking URL</label>
         <input class="finp" id="w-booking" value="${esc(c.bookingUrl||'')}" placeholder="https://...">
       </div>
     </div>
-    <label class="flbl">Logo URL <span style="color:var(--t3);font-weight:400">(optional)</span></label>
+    <label for="w-logo" class="flbl">Logo URL <span style="color:var(--t3);font-weight:400">(optional)</span></label>
     <input class="finp" id="w-logo" value="${esc(c.logoUrl||'')}" placeholder="https://yoursite.com/logo.png">
-    <label class="flbl">Accent color</label>
+    <label for="w-color" class="flbl">Accent color</label>
     <div class="color-row">
       <div class="color-preview" style="background:${esc(c.accent||'#b49dd4')}">
-        <input type="color" id="w-color" value="${esc(c.accent||'#b49dd4')}" oninput="document.querySelector('.color-preview').style.background=this.value;document.getElementById('w-color-hex').textContent=this.value">
+        <input type="color" id="w-color" aria-label="Accent color" value="${esc(c.accent||'#b49dd4')}" oninput="document.querySelector('.color-preview').style.background=this.value;document.getElementById('w-color-hex').textContent=this.value">
       </div>
       <span class="color-hex" id="w-color-hex">${esc(c.accent||'#b49dd4')}</span>
     </div>
@@ -413,7 +415,7 @@ function renderWidget(m) {
       ${(c.areas||[]).map((a,i) => `<span class="tag">${esc(a)}<button class="rm-tag" onclick="removeItem('areas',${i})">×</button></span>`).join('')}
     </div>
     <div class="add-tag-row">
-      <input class="add-tag-inp" id="add-area" placeholder="Add area…" onkeydown="if(event.key==='Enter')addItem('areas','add-area')">
+      <input class="add-tag-inp" id="add-area" aria-label="Add treatment area" placeholder="Add area…" onkeydown="if(event.key==='Enter')addItem('areas','add-area')">
       <button class="btn-sm" onclick="addItem('areas','add-area')">Add</button>
     </div>
   </div>
@@ -426,7 +428,7 @@ function renderWidget(m) {
       ${(c.concerns||[]).map((a,i) => `<span class="tag">${esc(a)}<button class="rm-tag" onclick="removeItem('concerns',${i})">×</button></span>`).join('')}
     </div>
     <div class="add-tag-row">
-      <input class="add-tag-inp" id="add-concern" placeholder="Add concern…" onkeydown="if(event.key==='Enter')addItem('concerns','add-concern')">
+      <input class="add-tag-inp" id="add-concern" aria-label="Add concern" placeholder="Add concern…" onkeydown="if(event.key==='Enter')addItem('concerns','add-concern')">
       <button class="btn-sm" onclick="addItem('concerns','add-concern')">Add</button>
     </div>
   </div>
@@ -439,7 +441,7 @@ function renderWidget(m) {
       ${(c.budget||[]).map((a,i) => `<span class="tag">${esc(a)}<button class="rm-tag" onclick="removeItem('budget',${i})">×</button></span>`).join('')}
     </div>
     <div class="add-tag-row">
-      <input class="add-tag-inp" id="add-budget" placeholder="e.g. $500 – $1,200" onkeydown="if(event.key==='Enter')addItem('budget','add-budget')">
+      <input class="add-tag-inp" id="add-budget" aria-label="Add budget range" placeholder="e.g. $500 – $1,200" onkeydown="if(event.key==='Enter')addItem('budget','add-budget')">
       <button class="btn-sm" onclick="addItem('budget','add-budget')">Add</button>
     </div>
   </div>
@@ -538,11 +540,11 @@ function treatNameCell(name, i) {
   const isCustom = !!(name && !ALL_TREATMENT_NAMES.includes(name));
   if (isCustom) {
     return `<div style="display:flex;gap:4px;align-items:center">
-      <input class="treat-inp" id="tn-${i}" value="${esc(name)}" placeholder="Treatment name" style="flex:1">
+      <input class="treat-inp" id="tn-${i}" value="${esc(name)}" aria-label="Treatment name" placeholder="Treatment name" style="flex:1">
       <button class="btn-sm" style="font-size:10px;white-space:nowrap;padding:4px 8px" onclick="switchToSelect(${i})" title="Browse list">☰</button>
     </div>`;
   }
-  return `<select class="treat-inp" id="tn-${i}" onchange="if(this.value==='__custom__')switchToInput(${i})" style="cursor:pointer">
+  return `<select class="treat-inp" id="tn-${i}" onchange aria-label="Treatment name"="if(this.value==='__custom__')switchToInput(${i})" style="cursor:pointer">
     <option value="">Select treatment…</option>
     <option value="__custom__" style="color:var(--ac-m);font-style:italic">✏ Type my own…</option>
     ${Object.entries(TREATMENT_OPTIONS).map(([cat, items]) =>
@@ -556,8 +558,8 @@ function treatNameCell(name, i) {
 function treatRow(t, i) {
   return `<tr id="tr-${i}">
     <td style="min-width:220px">${treatNameCell(t.name||'', i)}</td>
-    <td><input class="treat-inp" id="tp-${i}" value="${esc(t.price||'')}" placeholder="e.g. $300–500"></td>
-    <td><input class="treat-inp" id="td-${i}" value="${esc(t.notes||'')}" placeholder="Optional AI context"></td>
+    <td><input class="treat-inp" id="tp-${i}" aria-label="Treatment price" value="${esc(t.price||'')}" placeholder="e.g. $300–500"></td>
+    <td><input class="treat-inp" id="td-${i}" aria-label="Treatment notes for AI" value="${esc(t.notes||'')}" placeholder="Optional AI context"></td>
     <td><button class="btn-danger" onclick="removeTreatment(${i})">✕</button></td>
   </tr>`;
 }
@@ -566,7 +568,7 @@ function switchToInput(i) {
   const td = document.querySelector(`#tr-${i} td:first-child`);
   if (!td) return;
   td.innerHTML = `<div style="display:flex;gap:4px;align-items:center">
-    <input class="treat-inp" id="tn-${i}" placeholder="Type treatment name…" style="flex:1" autofocus>
+    <input class="treat-inp" id="tn-${i}" placeholder="Type treatment name…" aria-label="Treatment name" style="flex:1" autofocus>
     <button class="btn-sm" style="font-size:10px;white-space:nowrap;padding:4px 8px" onclick="switchToSelect(${i})" title="Browse list">☰</button>
   </div>`;
   document.getElementById(`tn-${i}`)?.focus();
@@ -678,7 +680,7 @@ function renderRouting(m) {
         { id:'none', ico:'🔕', title:'No notification', desc:'Leads are saved to your dashboard only.' },
         { id:'sms',  ico:'📱', title:'SMS alert',        desc:'Get a text message for every new lead.' },
       ].map(o => `
-      <div class="route-opt${rt===o.id?' selected':''}" onclick="selectRoute('${o.id}')">
+      <div class="route-opt${rt===o.id?' selected':''}" role="button" tabindex="0" onclick="selectRoute('${o.id}')">
         <div class="route-check">${rt===o.id?'✓':''}</div>
         <div class="route-opt-ico">${o.ico}</div>
         <div class="route-opt-title">${o.title}</div>
@@ -709,7 +711,7 @@ function renderRouteConfig(type, rc) {
   const el = document.getElementById('route-config');
   if (!el) return;
   el.innerHTML = type === 'sms' ? `
-    <label class="flbl" style="margin-top:1rem">Your mobile number</label>
+    <label for="rc-phone" class="flbl" style="margin-top:1rem">Your mobile number</label>
     <input class="finp" id="rc-phone" value="${esc(rc.phone||rc.notificationPhone||'')}" placeholder="+15550001234">
     <p style="font-size:11px;color:var(--t3);margin-top:.35rem">Requires <strong>TEXTBELT_KEY</strong> in your Railway Variables. Get a key at textbelt.com (~$0.04/text).</p>
   ` : '';
@@ -763,7 +765,7 @@ function renderLeadRow(l) {
   const initials = ((l.fname||'?')[0]+(l.lname||'?')[0]).toUpperCase();
   const dt = new Date(l.capturedAt);
   const dateStr = dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  return `<div class="lead-row" onclick="toggleLead('ld-${l.id}')">
+  return `<div class="lead-row" role="button" tabindex="0" onclick="toggleLead('ld-${l.id}')">
     <div class="lead-avatar">${esc(initials)}</div>
     <div class="lead-info">
       <div class="lead-name">${esc(l.fname)} ${esc(l.lname)}</div>
@@ -1054,11 +1056,11 @@ async function renderTestimonial(m) {
   </div>
   <div class="card" style="max-width:560px">
     <div id="testi-err" style="display:none;font-size:13px;color:#c0392b;background:#fff5f5;border-radius:8px;padding:10px 13px;margin-bottom:12px"></div>
-    <label class="flbl">Your name</label>
+    <label for="t-name" class="flbl">Your name</label>
     <input class="finp" id="t-name" placeholder="Dr. Jane Smith" style="margin-bottom:12px">
-    <label class="flbl">Your title / role <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
+    <label for="t-role" class="flbl">Your title / role <span style="font-weight:400;color:var(--t3)">(optional)</span></label>
     <input class="finp" id="t-role" placeholder="e.g. Owner, Nurse Injector, Medical Director" style="margin-bottom:12px">
-    <label class="flbl">Your review <span style="font-weight:400;color:var(--t3)" id="t-count">(0 / 500)</span></label>
+    <label for="t-content" class="flbl">Your review <span style="font-weight:400;color:var(--t3)" id="t-count">(0 / 500)</span></label>
     <textarea class="finp" id="t-content" rows="5" placeholder="Tell us how Meet Goldie has helped your practice…" oninput="document.getElementById('t-count').textContent='('+this.value.length+' / 500)'" style="resize:vertical;margin-bottom:16px"></textarea>
     <button class="btn-pri" onclick="submitTestimonial()">Submit review →</button>
   </div>`;
@@ -1085,6 +1087,16 @@ if (urlParams.get('upgraded') === '1') {
 
 // ── Boot ──
 init();
+</script>
+<script>
+// Keyboard support for non-button elements marked role="button"
+document.addEventListener('keydown', e => {
+  const el = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && el.getAttribute && el.getAttribute('role') === 'button' && el.tagName !== 'BUTTON') {
+    e.preventDefault();
+    el.click();
+  }
+});
 </script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <title>Sign up · Meet Goldie</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.16);--t1:#1a1a1a;--t2:#555;--t3:#999}
+:root{--ac:#b49dd4;--ac-l:#EEEDFE;--ac-d:#3C3489;--ac-m:#7c5ca8;--bg:#fff;--bg2:#f8f7fb;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.16);--t1:#1a1a1a;--t2:#555;--t3:#6b6b6b}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#f0eef8,#faf9ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
 .card{width:100%;max-width:420px;background:var(--bg);border-radius:20px;border:0.5px solid var(--border);box-shadow:0 8px 40px rgba(60,52,137,.1);overflow:hidden}
 .card-hdr{padding:2rem 2rem 1.5rem;border-bottom:0.5px solid var(--border)}
@@ -26,6 +26,8 @@ h1{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
 .err{font-size:13px;color:#c0392b;background:#fff5f5;border:0.5px solid #fbc9c9;border-radius:8px;padding:10px 13px;margin-bottom:12px;display:none}
 .login-link{text-align:center;margin-top:1.25rem;font-size:13px;color:var(--t2)}
 .login-link a{color:var(--ac-m);font-weight:600;text-decoration:none}
+:focus-visible{outline:2px solid #3C3489!important;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SGQE8EDK4Q"></script>
@@ -39,20 +41,20 @@ h1{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
     <p class="card-sub">14 days free. No credit card required. Set up in minutes.</p>
   </div>
   <div class="card-body">
-    <div class="err" id="err"></div>
-    <label class="flbl">Clinic name</label>
+    <div class="err" id="err" role="alert"></div>
+    <label for="clinic" class="flbl">Clinic name</label>
     <input class="finp" id="clinic" placeholder="Lumière Aesthetics" autocomplete="organization">
-    <label class="flbl">Your last name</label>
+    <label for="lname" class="flbl">Your last name</label>
     <input class="finp" id="lname" placeholder="Doe" autocomplete="family-name">
-    <label class="flbl" style="display:flex;align-items:center;gap:6px;justify-content:space-between">
+    <label for="npi" class="flbl" style="display:flex;align-items:center;gap:6px;justify-content:space-between">
       NPI number
       <a href="https://npiregistry.cms.hhs.gov/search" target="_blank" rel="noopener" style="font-size:11px;color:var(--ac-m);font-weight:500;text-decoration:none">Look up your NPI →</a>
     </label>
     <input class="finp" id="npi" placeholder="10-digit NPI" maxlength="10" inputmode="numeric" pattern="[0-9]{10}">
     <div id="npi-status" style="font-size:12px;margin:-8px 0 12px;display:none"></div>
-    <label class="flbl">Your email</label>
+    <label for="email" class="flbl">Your email</label>
     <input class="finp" id="email" type="email" placeholder="you@yourclinic.com" autocomplete="email">
-    <label class="flbl">Password</label>
+    <label for="pw" class="flbl">Password</label>
     <input class="finp" id="pw" type="password" placeholder="At least 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')signup()">
     <button class="btn" id="btn" onclick="signup()">Create account →</button>
     <div class="login-link">Already have an account? <a href="/login">Sign in</a></div>

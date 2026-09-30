@@ -234,6 +234,15 @@ module.exports = {
     return rows.map(parseLead);
   },
 
+  async purgePhotosOlderThan(days) {
+    const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+    const { rowCount } = await pool.query(
+      "UPDATE leads SET photos = '{}' WHERE captured_at < $1 AND photos IS NOT NULL AND photos <> '{}'",
+      [cutoff]
+    );
+    return rowCount;
+  },
+
   async deleteLeadById(id) {
     await pool.query('DELETE FROM leads WHERE id = $1', [id]);
   },

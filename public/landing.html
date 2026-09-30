@@ -171,7 +171,7 @@ section{padding:5rem 1.5rem}
 .cta-btns{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
 .btn-white{padding:14px 30px;background:#fff;color:var(--ac-d);border-radius:10px;font-size:15px;font-weight:700;transition:all .18s;display:inline-block}
 .btn-white:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
-.btn-ghost{padding:14px 30px;background:transparent;color:#fff;border-radius:10px;font-size:15px;font-weight:600;border:1.5px solid rgba(255,255,255,.4);transition:all .18s;display:inline-block}
+.btn-ghost{padding:14px 30px;background:transparent;color:#fff;border-radius:10px;font-size:15px;font-weight:600;border:1.5px solid rgba(255,255,255,.65);transition:all .18s;display:inline-block}
 .btn-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.6)}
 .cta-note{font-size:13px;color:rgba(255,255,255,.45);margin-top:1.25rem}
 
@@ -182,7 +182,7 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
 .footer-logo{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:.5rem}
 .footer-logo span{color:var(--ac)}
 .footer-tagline{font-size:13px;line-height:1.6}
-.footer-links-group h4{font-size:12px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem}
+.footer-links-group h4{font-size:12px;font-weight:700;color:rgba(255,255,255,.65);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem}
 .footer-links-group ul{list-style:none;display:flex;flex-direction:column;gap:.5rem}
 .footer-links-group a{font-size:13px;color:rgba(255,255,255,.5);transition:color .14s}
 .footer-links-group a:hover{color:#fff}
@@ -207,6 +207,8 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
   section{padding:3.5rem 1.25rem}
   .features-grid{grid-template-columns:1fr}
 }
+:focus-visible{outline:2px solid #3C3489!important;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -523,12 +525,13 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
         <li><a href="/privacy">Privacy Policy</a></li>
         <li><a href="/terms">Terms of Service</a></li>
         <li><a href="/cookies">Cookie Policy</a></li>
+        <li><a href="/accessibility">Accessibility</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Meet Goldie. All rights reserved. · <a href="#" class="termly-display-preferences" style="color:rgba(255,255,255,.4);text-decoration:none">Consent Preferences</a></span>
-    <span><a href="/privacy" style="color:rgba(255,255,255,.4);text-decoration:none">Privacy</a> · <a href="/terms" style="color:rgba(255,255,255,.4);text-decoration:none">Terms</a> · <a href="/cookies" style="color:rgba(255,255,255,.4);text-decoration:none">Cookies</a></span>
+    <span>© 2026 Meet Goldie. All rights reserved. · <a href="#" class="termly-display-preferences" style="color:rgba(255,255,255,.65);text-decoration:none">Consent Preferences</a></span>
+    <span><a href="/privacy" style="color:rgba(255,255,255,.65);text-decoration:none">Privacy</a> · <a href="/terms" style="color:rgba(255,255,255,.65);text-decoration:none">Terms</a> · <a href="/cookies" style="color:rgba(255,255,255,.65);text-decoration:none">Cookies</a> · <a href="/accessibility" style="color:rgba(255,255,255,.65);text-decoration:none">Accessibility</a></span>
   </div>
 </footer>
 <script>
