@@ -57,6 +57,7 @@ async function migrate() {
   await pool.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS photos TEXT DEFAULT '{}'`);
   await pool.query(`ALTER TABLE providers ADD COLUMN IF NOT EXISTS npi TEXT DEFAULT ''`);
   await pool.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_pref TEXT DEFAULT ''`);
+  await pool.query(`ALTER TABLE leads ADD COLUMN IF NOT EXISTS photo_consent_at TEXT`);
   await pool.query(`CREATE TABLE IF NOT EXISTS testimonials (
     id TEXT PRIMARY KEY,
     provider_id TEXT NOT NULL REFERENCES providers(id),
@@ -214,8 +215,8 @@ module.exports = {
     const id = newId();
     const now = new Date().toISOString();
     await pool.query(
-      `INSERT INTO leads (id,provider_id,widget_code,fname,lname,email,phone,areas,concerns,history,budget,analysis,modalities,package,has_photos,skin_quality,photos,captured_at,contact_pref)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+      `INSERT INTO leads (id,provider_id,widget_code,fname,lname,email,phone,areas,concerns,history,budget,analysis,modalities,package,has_photos,skin_quality,photos,captured_at,contact_pref,photo_consent_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
       [id, lead.providerId, lead.widgetCode,
        lead.fname||'', lead.lname||'', lead.email||'', lead.phone||'',
        JSON.stringify(lead.areas||[]), JSON.stringify(lead.concerns||[]),
@@ -223,7 +224,7 @@ module.exports = {
        lead.budget||'', lead.analysis||'',
        JSON.stringify(lead.modalities||[]), lead.package||'',
        lead.hasPhotos ? 1 : 0, lead.skinQuality||'',
-       JSON.stringify(lead.photos||{}), now, lead.contactPref||'']
+       JSON.stringify(lead.photos||{}), now, lead.contactPref||'', lead.photoConsent ? now : null]
     );
     const { rows } = await pool.query('SELECT * FROM leads WHERE id = $1', [id]);
     return parseLead(rows[0]);

@@ -252,6 +252,27 @@ async function sendSms(to, message) {
   return result;
 }
 
+// ── Lead alert email ──
+// Deliberately minimal: no treatment details or contact info in email, which can't be
+// recalled if the patient later deletes their data. Details stay behind the dashboard login.
+function sendLeadAlert(to, lead, widget) {
+  const appUrl = process.env.APP_URL || 'https://www.meetgoldie.com';
+  const clinic = escHtml(widget.config?.clinicName || 'your clinic');
+  const initial = lead.lname ? ` ${String(lead.lname).trim().charAt(0)}.` : '';
+  const who = `${String(lead.fname || 'A new client').trim()}${initial}`;
+  return sendEmail({
+    to,
+    subject: `New consultation lead: ${who}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px">
+        <h2 style="color:#3C3489;margin-bottom:8px">New consultation lead</h2>
+        <p style="color:#333;font-size:15px;line-height:1.6">${escHtml(who)} completed the Goldie pre-consultation for ${clinic}.</p>
+        <p style="margin:24px 0"><a href="${appUrl}/dashboard" style="background:#3C3489;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">View lead in dashboard →</a></p>
+        <p style="font-size:12px;color:#6b6b6b">For patient privacy, lead details are only available in your secure dashboard.</p>
+      </div>`,
+  });
+}
+
 // ── Lead routing ──
 async function routeLead(lead, widget) {
   const type = widget.routing_type;
@@ -260,24 +281,7 @@ async function routeLead(lead, widget) {
   const smsSentTo = new Set();
 
   if (type === 'email' && config.email) {
-    const areas = escHtml((lead.areas || []).join(', '));
-    const mods = escHtml((lead.modalities || []).join(', '));
-    await sendEmail({
-      to: config.email,
-      subject: `New consultation lead: ${lead.fname} ${lead.lname}`,
-      html: `
-        <h2 style="font-family:sans-serif;color:#3C3489">New Lead — ${widget.config?.clinicName || 'Your Clinic'}</h2>
-        <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:500px">
-          <tr><td style="padding:6px 0;color:#888;width:140px">Name</td><td style="padding:6px 0;font-weight:600">${escHtml(lead.fname)} ${lead.lname}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Email</td><td style="padding:6px 0">${escHtml(lead.email)}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Phone</td><td style="padding:6px 0">${escHtml(lead.phone || '—')}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Budget</td><td style="padding:6px 0">${escHtml(lead.budget)}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Areas</td><td style="padding:6px 0">${areas}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">AI Recommendations</td><td style="padding:6px 0">${mods}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Package</td><td style="padding:6px 0">${escHtml(lead.package)}</td></tr>
-        </table>
-        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by Meet Goldie</p>`,
-    });
+    await sendLeadAlert(config.email, lead, widget);
   }
 
   if (type === 'sms' && config.phone) {
@@ -300,24 +304,7 @@ async function routeLead(lead, widget) {
 
   // Always-on email alert
   if (config.notificationEmail) {
-    const areas = escHtml((lead.areas || []).join(', '));
-    const mods = escHtml((lead.modalities || []).join(', '));
-    await sendEmail({
-      to: config.notificationEmail,
-      subject: `New consultation lead: ${lead.fname} ${lead.lname}`,
-      html: `
-        <h2 style="font-family:sans-serif;color:#3C3489">New Lead — ${widget.config?.clinicName || 'Your Clinic'}</h2>
-        <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:500px">
-          <tr><td style="padding:6px 0;color:#888;width:140px">Name</td><td style="padding:6px 0;font-weight:600">${escHtml(lead.fname)} ${lead.lname}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Email</td><td style="padding:6px 0">${escHtml(lead.email)}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Phone</td><td style="padding:6px 0">${escHtml(lead.phone || '—')}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Budget</td><td style="padding:6px 0">${escHtml(lead.budget)}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Areas</td><td style="padding:6px 0">${areas}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">AI Recommendations</td><td style="padding:6px 0">${mods}</td></tr>
-          <tr><td style="padding:6px 0;color:#888">Package</td><td style="padding:6px 0">${escHtml(lead.package)}</td></tr>
-        </table>
-        <p style="font-family:sans-serif;font-size:12px;color:#aaa;margin-top:24px">Sent by Meet Goldie</p>`,
-    }).catch(err => console.warn('Email alert error:', err.message));
+    await sendLeadAlert(config.notificationEmail, lead, widget).catch(err => console.warn('Email alert error:', err.message));
   }
 
   if (type === 'chatbot' && lead.email) {
@@ -627,7 +614,9 @@ app.post('/api/leads', leadLimiter, async (req, res) => {
       }
     }
 
-    const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode, photos: body.photos || {} });
+    // Photos are only stored with the patient's explicit consent
+    const photos = body.photoConsent ? (body.photos || {}) : {};
+    const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode, photos, photoConsent: !!body.photoConsent });
 
     // Route the lead (fire and forget)
     if (widget) routeLead(lead, widget).catch(err => console.warn('Routing error:', err.message));
@@ -713,8 +702,9 @@ app.get('/api/admin/providers', adminLimiter, requireAdmin, async (req, res) => 
   res.json(await db.getAllProviders());
 });
 
-// ── Data retention: clear lead photos after PHOTO_RETENTION_DAYS (default 90) ──
-const PHOTO_RETENTION_DAYS = parseInt(process.env.PHOTO_RETENTION_DAYS, 10) || 90;
+// ── Data retention: clear lead photos after PHOTO_RETENTION_DAYS (default 14) ──
+// The widget's photo notice promises 14 days — update public/index.html if this changes.
+const PHOTO_RETENTION_DAYS = parseInt(process.env.PHOTO_RETENTION_DAYS, 10) || 14;
 async function purgeOldPhotos() {
   try {
     const n = await db.purgePhotosOlderThan(PHOTO_RETENTION_DAYS);

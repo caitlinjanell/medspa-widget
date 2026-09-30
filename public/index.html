@@ -56,6 +56,8 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 .aibadge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;background:var(--ac-l);color:var(--ac-d);font-size:11px;font-weight:600;margin-bottom:.8rem;letter-spacing:.04em;text-transform:uppercase}
 .ibox{background:var(--bg2);border-radius:var(--r-sm);padding:10px 12px;display:flex;gap:9px;align-items:flex-start;margin-bottom:1.2rem}
 .ibox-t{font-size:12px;color:var(--t3);line-height:1.65}
+.consent{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--t2);line-height:1.55;margin:0 0 1.2rem;cursor:pointer}
+.consent input{width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:var(--ac-d,#3C3489);cursor:pointer}
 .disc{font-size:11px;color:var(--t3);line-height:1.65;padding:10px 12px;background:var(--bg2);border-radius:var(--r-sm);border-left:2px solid var(--border2)}
 .ldots{display:flex;align-items:center;justify-content:center;gap:7px;padding:2.5rem 0}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ac);animation:dp 1.3s infinite ease-in-out}
@@ -226,7 +228,7 @@ function getBudget()   { return window._BUDGET   || DEFAULTS.budget; }
 const S = {
   step:1, areas:[], concerns:[], history:[], budget:'',
   fname:'', lname:'', email:'', phone:'', contactPref:'',
-  photos:{front:null,left:null,right:null,smile:null},
+  photos:{front:null,left:null,right:null,smile:null}, photoConsent:false,
   pa:null,
   results:null, leadSaved:false,
   chatMsgs:[], chatDisplay:[], chatSys:'',
@@ -266,7 +268,7 @@ function ck() {
     1: S.areas.length > 0,
     2: S.concerns.length > 0,
     3: S.history.length > 0 && S.budget,
-    4: Object.values(S.photos).some(v => v),
+    4: Object.values(S.photos).some(v => v) && S.photoConsent,
     5: S.fname && S.lname && S.email && validEmail(S.email) && S.phone && S.contactPref,
   }[S.step]);
 }
@@ -365,7 +367,7 @@ const STEPS = {
     <div class="sub">At least one photo required. All four gives the best results.</div>
     <div class="ibox">
       <span style="font-size:15px;margin-top:1px">🔒</span>
-      <span class="ibox-t">Your photos are used only to personalize your aesthetic consultation experience at ${CLINIC.name}. They are not stored as medical records and are not shared with third parties.</span>
+      <span class="ibox-t">Your photos are analyzed by AI to personalize your consultation and shared only with ${CLINIC.name}. They are automatically deleted after 14 days. <a href="/privacy" target="_blank" rel="noopener" style="color:inherit">Privacy Policy</a></span>
     </div>
     <div class="pgrid">
       ${SLOTS.map(sl => `
@@ -376,6 +378,10 @@ const STEPS = {
         </div>
         <input type="file" id="i-${sl.k}" accept="image/*" capture="user" style="display:none">`).join('')}
     </div>
+    <label class="consent" for="photo-consent">
+      <input type="checkbox" id="photo-consent" ${S.photoConsent ? 'checked' : ''} onchange="S.photoConsent=this.checked;ck()">
+      <span>I agree that my photos may be analyzed by AI to personalize my consultation and shared with ${CLINIC.name}. I understand this is not medical advice.</span>
+    </label>
     <button class="btn gho" onclick="go(3)">← Back</button>
     <button class="btn pri" id="nb" onclick="go(5)" disabled>Continue</button>`;
   },
@@ -526,6 +532,7 @@ async function saveLead(d) {
         package: d.estimatedInvestment?.package || '',
         photos: Object.fromEntries(Object.entries(S.photos).filter(([,v]) => v)),
         hasPhotos: Object.values(S.photos).some(v => v),
+        photoConsent: S.photoConsent,
         skinQuality: S.pa?.skinQualityScore || null,
         widgetCode: WIDGET_CODE || null,
       }),
