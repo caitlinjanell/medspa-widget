@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script src="https://app.termly.io/resource-blocker/10a6cd35-76e9-46e4-bd5b-f684254ab0b9?autoBlock=on"></script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cookie Policy · Meet Goldie</title>
@@ -20,12 +19,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 footer{background:#111;color:rgba(255,255,255,.5);padding:2rem 1.5rem;text-align:center;font-size:13px}
 footer a{color:rgba(255,255,255,.5);text-decoration:none;margin:0 .75rem}
 footer a:hover{color:#fff}
+.content h2{font-size:18px;font-weight:700;margin:2rem 0 .5rem}
+.content p,.content li{font-size:15px;color:#333;margin-bottom:.75rem}
+.content ul{padding-left:1.25rem}
+.content a{color:#3C3489}
+.content h3{font-size:15px;font-weight:700;margin:1.25rem 0 .4rem}
+.content .toc{background:#f8f7fb;border-radius:10px;padding:1rem 1.25rem;margin-bottom:2rem}
+.content .toc li{margin-bottom:.25rem;font-size:14px}
+.content table{border-collapse:collapse;width:100%;margin:.75rem 0 1.25rem;font-size:14px}
+.content th,.content td{border:1px solid rgba(0,0,0,.12);padding:8px 10px;text-align:left;vertical-align:top}
+.content th{background:#f8f7fb}
+.content .updated{color:#6b6b6b;font-size:13px}
+
 :focus-visible{outline:2px solid #3C3489!important;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SGQE8EDK4Q"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SGQE8EDK4Q');</script>
+<script src="/consent.js" defer></script>
 </head>
 <body>
 
@@ -36,17 +45,32 @@ footer a:hover{color:#fff}
   </div>
 </nav>
 
-<div class="content">
+<main class="content">
   <h1>Cookie Policy</h1>
-  <div name="termly-embed" data-id="c73e6c93-3d73-469f-a53f-8d6a357e2924"></div>
-  <script type="text/javascript">(function(d, s, id) {
-    var js, tjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "https://app.termly.io/embed-policy.min.js";
-    tjs.parentNode.insertBefore(js, tjs);
-  }(document, 'script', 'termly-jssdk'));</script>
-</div>
+  <p class="updated">Last updated: September 30, 2026</p>
+
+  <nav class="toc" aria-label="Contents"><ol><li><a href="#what">1. What Cookies Are</a></li><li><a href="#use">2. Cookies We Use</a></li><li><a href="#essential">3. Essential Cookies</a></li><li><a href="#analytics">4. Analytics Cookies</a></li><li><a href="#choices">5. Your Choices</a></li><li><a href="#changes">6. Changes and Contact</a></li></ol></nav>
+  <h2 id="what">1. What Cookies Are</h2>
+  <p>Cookies are small text files a website stores in your browser. Similar technologies, like browser local storage, work the same way. This policy covers both.</p>
+
+  <h2 id="use">2. Cookies We Use</h2>
+  <table><thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Duration</th></tr></thead><tbody><tr><td>goldie-cookie-consent</td><td>Essential (browser storage)</td><td>Remembers whether you accepted or declined analytics cookies</td><td>Until you clear it</td></tr><tr><td>aiToken, aiProvider</td><td>Essential (browser storage)</td><td>Keeps Providers signed in to the dashboard</td><td>Until sign-out or 30 days</td></tr><tr><td>adminPw</td><td>Essential (session storage)</td><td>Keeps the site administrator signed in for the browser session</td><td>Until the tab is closed</td></tr><tr><td>__cf_bm and similar</td><td>Essential (cookie)</td><td>Set by Cloudflare to protect the site from bots and attacks</td><td>Up to 30 minutes</td></tr><tr><td>_ga, _ga_*</td><td>Analytics (cookie), <strong>only with consent</strong></td><td>Google Analytics: counts visits and shows how our marketing pages are used</td><td>Up to 2 years</td></tr></tbody></table>
+  <p>We do not use advertising or cross-site tracking cookies. The consultation widget that practices embed on their websites does not use analytics cookies.</p>
+
+  <h2 id="essential">3. Essential Cookies</h2>
+  <p>Essential cookies and storage are needed for the site to work and stay secure, for example keeping you signed in or protecting against attacks. They can't be turned off in our settings, but you can block them in your browser; parts of the site may then stop working.</p>
+
+  <h2 id="analytics">4. Analytics Cookies</h2>
+  <p>We use Google Analytics on our marketing pages (such as the home page and sign-up page) to understand how visitors find and use the site. Analytics cookies are <strong>off by default</strong> and load only if you click "Accept" in our cookie banner. IP addresses are anonymized. Google's use of this data is described in <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</p>
+
+  <h2 id="choices">5. Your Choices</h2>
+  <p>You can change your choice at any time: <a href="#" onclick="openCookiePreferences(event)">open Cookie Preferences</a>. You can also use the Cookie Preferences link in our footer.</p>
+  <p>If your browser sends a <strong>Global Privacy Control</strong> signal, we treat it as declining analytics cookies and won't show the banner. You can also block or delete cookies in your browser settings.</p>
+
+  <h2 id="changes">6. Changes and Contact</h2>
+  <p>We may update this policy if the cookies we use change. Questions: <a href="mailto:hello@meetgoldie.com">hello@meetgoldie.com</a>.</p>
+
+</main>
 
 <footer>
   <a href="/">Home</a>
@@ -54,7 +78,7 @@ footer a:hover{color:#fff}
   <a href="/terms">Terms of Service</a>
   <a href="/cookies">Cookie Policy</a>
   <a href="/accessibility">Accessibility</a>
-  <div style="margin-top:.75rem">© 2026 Meet Goldie. All rights reserved. · <a href="#" class="termly-display-preferences" style="color:rgba(255,255,255,.65);text-decoration:none">Consent Preferences</a></div>
+  <a href="#" onclick="openCookiePreferences(event)">Cookie Preferences</a>
 </footer>
 
 </body>

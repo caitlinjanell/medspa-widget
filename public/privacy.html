@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script src="https://app.termly.io/resource-blocker/10a6cd35-76e9-46e4-bd5b-f684254ab0b9?autoBlock=on"></script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy · Meet Goldie</title>
@@ -16,17 +15,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nav-back{font-size:13px;color:#555;text-decoration:none;transition:color .14s}
 .nav-back:hover{color:#3C3489}
 .content{max-width:860px;margin:0 auto;padding:3rem 1.5rem 5rem}
-.content h1{font-size:28px;font-weight:800;color:#1a1a1a;letter-spacing:-.02em;margin-bottom:.5rem}
-.content .last-updated{font-size:13px;color:#888;margin-bottom:2.5rem}
+.content h1{font-size:28px;font-weight:800;color:#1a1a1a;letter-spacing:-.02em;margin-bottom:2rem}
 footer{background:#111;color:rgba(255,255,255,.5);padding:2rem 1.5rem;text-align:center;font-size:13px}
 footer a{color:rgba(255,255,255,.5);text-decoration:none;margin:0 .75rem}
 footer a:hover{color:#fff}
+.content h2{font-size:18px;font-weight:700;margin:2rem 0 .5rem}
+.content p,.content li{font-size:15px;color:#333;margin-bottom:.75rem}
+.content ul{padding-left:1.25rem}
+.content a{color:#3C3489}
+.content h3{font-size:15px;font-weight:700;margin:1.25rem 0 .4rem}
+.content .toc{background:#f8f7fb;border-radius:10px;padding:1rem 1.25rem;margin-bottom:2rem}
+.content .toc li{margin-bottom:.25rem;font-size:14px}
+.content table{border-collapse:collapse;width:100%;margin:.75rem 0 1.25rem;font-size:14px}
+.content th,.content td{border:1px solid rgba(0,0,0,.12);padding:8px 10px;text-align:left;vertical-align:top}
+.content th{background:#f8f7fb}
+.content .updated{color:#6b6b6b;font-size:13px}
+
 :focus-visible{outline:2px solid #3C3489!important;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SGQE8EDK4Q"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SGQE8EDK4Q');</script>
+<script src="/consent.js" defer></script>
 </head>
 <body>
 
@@ -37,46 +45,59 @@ footer a:hover{color:#fff}
   </div>
 </nav>
 
-<div class="content">
+<main class="content">
   <h1>Privacy Policy</h1>
-  <div name="termly-embed" data-id="a940cfea-391c-43f2-ab71-39998db1b68e"></div>
-  <script type="text/javascript">(function(d, s, id) {
-    var js, tjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "https://app.termly.io/embed-policy.min.js";
-    tjs.parentNode.insertBefore(js, tjs);
-  }(document, 'script', 'termly-jssdk'));</script>
+  <p class="updated">Last updated: September 30, 2026</p>
+  <p><strong>The short version:</strong> we collect what's needed to deliver a personalized pre-consultation to the practice you chose. Photos require your consent and are deleted after 14 days. We don't sell your data or use it to train AI, and you can delete your information at any time.</p>
 
-  <div style="margin-top:3rem;padding-top:2.5rem;border-top:1px solid #eee">
-    <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;letter-spacing:-.01em;margin-bottom:1.25rem">Meet Goldie — Service-Specific Privacy Disclosures</h2>
+  <nav class="toc" aria-label="Contents"><ol><li><a href="#who">1. Who We Are</a></li><li><a href="#collect">2. Information We Collect</a></li><li><a href="#use">3. How We Use Information</a></li><li><a href="#photos">4. Photos</a></li><li><a href="#share">5. How We Share Information</a></li><li><a href="#retention">6. Data Retention</a></li><li><a href="#choices">7. Your Choices and Rights</a></li><li><a href="#security">8. Security</a></li><li><a href="#hipaa">9. HIPAA</a></li><li><a href="#children">10. Children</a></li><li><a href="#changes">11. Changes to This Policy</a></li><li><a href="#contact">12. Contact Us</a></li></ol></nav>
+  <h2 id="who">1. Who We Are</h2>
+  <p>Meet Goldie, LLC ("Meet Goldie," "we," "us") provides an AI-powered pre-consultation widget that aesthetic practices ("Providers") embed on their websites for prospective clients ("End Users"). This policy explains what we collect, why, who we share it with, and your choices.</p>
+  <p>When an End User completes a Provider's consultation widget, we collect and process that information on the Provider's behalf to deliver the consultation to that Provider. The Provider's own privacy practices govern how it uses the information after receiving it.</p>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">1. What We Collect</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">Meet Goldie collects two categories of information:</p>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.5rem"><strong>Provider accounts:</strong> Name, email address, NPI number, clinic name, and billing information for aesthetic practices that create an account.</p>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem"><strong>Consultation preferences:</strong> Information submitted by end users through an embedded widget — including name, contact information, aesthetic goals, areas of interest, prior aesthetic experience, budget range, and facial photos. This information is collected on behalf of the deploying practice and is not used by Meet Goldie for any purpose other than providing the service.</p>
+  <h2 id="collect">2. Information We Collect</h2>
+  <table><thead><tr><th>Category</th><th>What we collect</th><th>Source</th></tr></thead><tbody><tr><td>Provider account</td><td>Email address, password (stored as a one-way hash), clinic name, last name and NPI number (for verification), widget settings, notification email and phone number</td><td>Provider</td></tr><tr><td>Billing</td><td>Subscription plan and status. Card details are collected and stored by Stripe; we never see or store full card numbers.</td><td>Provider, Stripe</td></tr><tr><td>Consultation information</td><td>First and last name, email, phone, preferred contact method, areas of interest, concerns, prior aesthetic experience, budget range, facial photos, and the AI-generated summary and recommendations</td><td>End User</td></tr><tr><td>Consent records</td><td>Date and time an End User consented to photo processing</td><td>End User</td></tr><tr><td>Technical data</td><td>IP address, browser type, and request logs used for security and rate limiting</td><td>Automatically</td></tr><tr><td>Analytics (optional)</td><td>Pages visited and general usage on our marketing pages, only if you accept analytics cookies. Never collected on the consultation widget or dashboard.</td><td>Google Analytics</td></tr></tbody></table>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">2. How We Use It</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">Consultation preference data is used solely to generate a personalized aesthetic consultation experience and to deliver that information to the deploying practice. We do not sell, rent, or share this data with third parties for marketing purposes. We do not use end-user consultation data to train AI models.</p>
+  <h2 id="use">3. How We Use Information</h2>
+  <ul><li>To generate a personalized consultation summary for the End User and deliver it to the Provider the End User chose;</li><li>To email End Users a copy of their own results;</li><li>To notify Providers that a new consultation was received;</li><li>To operate, secure, and troubleshoot the Service, including preventing abuse;</li><li>To manage Provider accounts, verify NPI numbers, and process subscriptions; and</li><li>To understand use of our marketing pages, if you accept analytics cookies.</li></ul>
+  <p>We do not sell personal information, do not share it for cross-context behavioral advertising, and do not use End User consultation information or photos to train AI models.</p>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">3. Third-Party Services</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">To provide the service, consultation preference data (including photos) is processed by <strong>Anthropic</strong> (AI analysis) and stored via <strong>Railway</strong> (cloud infrastructure). Both services are subject to their own privacy policies. We encourage users to review those policies. Billing is processed by <strong>Stripe</strong>, which handles payment data independently under its own privacy and security standards.</p>
+  <h2 id="photos">4. Photos</h2>
+  <p>At least one facial photo is required to complete a consultation, because the AI analysis depends on it. End Users who do not wish to share photos can contact the Provider directly instead.</p>
+  <p>Photos are collected only after the End User checks a consent box agreeing to AI analysis, sharing with the Provider, and storage for 14 days. We record when that consent was given. Photos are analyzed by our AI service provider, shown to the Provider in its secure dashboard, and <strong>automatically deleted from our systems 14 days after submission</strong>. We do not use photos to identify individuals or create facial recognition templates, and photos are not used for medical diagnosis.</p>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">4. Photos</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">At least one photo is required to complete the consultation, because the AI analysis depends on it. Users who do not wish to share photos may contact the practice directly instead. Photos are used only to personalize the aesthetic consultation experience. They are transmitted to the deploying practice and processed by Anthropic's AI for aesthetic observation purposes. Photos are not used for medical diagnosis, are not stored as medical records, and are not shared with any party other than the deploying practice and Anthropic for the purpose described above. Photos are collected only after the user gives consent in the widget, and are automatically deleted from our systems 14 days after submission.</p>
+  <h2 id="share">5. How We Share Information</h2>
+  <p><strong>With the Provider.</strong> Consultation information is shared with the Provider whose widget the End User used. Lead alert emails and texts to Providers contain only the End User's first name and last initial; full details are available only in the Provider's secure dashboard.</p>
+  <p><strong>With service providers</strong> who process data on our behalf under contractual confidentiality and security obligations:</p>
+  <table><thead><tr><th>Service provider</th><th>Purpose</th><th>Data involved</th></tr></thead><tbody><tr><td>Anthropic</td><td>AI analysis and chat</td><td>Consultation answers and photos</td></tr><tr><td>Railway</td><td>Hosting and database</td><td>All Service data</td></tr><tr><td>Cloudflare</td><td>Network security and delivery</td><td>Technical data</td></tr><tr><td>Stripe</td><td>Subscription payments</td><td>Provider billing details</td></tr><tr><td>Email delivery provider</td><td>Sending results to End Users and alerts to Providers</td><td>Email address, name, results summary</td></tr><tr><td>TextBelt</td><td>Text-message lead alerts to Providers</td><td>Provider phone number; the message contains no End User details</td></tr><tr><td>CMS NPI Registry</td><td>Verifying Provider NPI numbers at signup</td><td>NPI number</td></tr><tr><td>Google Analytics</td><td>Website analytics, only with consent</td><td>Usage data on marketing pages</td></tr></tbody></table>
+  <p><strong>For legal reasons</strong>, if required by law, subpoena, or to protect the rights and safety of our users or others.</p>
+  <p><strong>In a business transfer</strong>, such as a merger or acquisition, subject to this policy.</p>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">5. This Is Not a Medical Records System</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">Information collected through Meet Goldie's consultation widget is aesthetic preference data, not Protected Health Information (PHI) under HIPAA. Meet Goldie is not a HIPAA covered entity or business associate with respect to consultation preference data. Providers using Meet Goldie remain independently responsible for their own HIPAA obligations with respect to their patients.</p>
+  <h2 id="retention">6. Data Retention</h2>
+  <ul><li><strong>Photos:</strong> automatically deleted 14 days after submission.</li><li><strong>Other consultation information:</strong> kept while the Provider's account is active, until the End User or Provider deletes it.</li><li><strong>Provider accounts:</strong> kept until the Provider deletes the account; all associated consultation data is then permanently deleted.</li><li><strong>Billing records:</strong> kept by Stripe and as required for tax and accounting purposes.</li><li><strong>Technical logs:</strong> kept for a limited period for security and troubleshooting.</li></ul>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">6. Data Retention</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">Photos are automatically deleted 14 days after submission. Other consultation preference data is retained as long as the provider's account is active. Providers may delete individual leads from their dashboard at any time. Lead notification emails sent to providers contain only the user's first name and last initial; consultation details are available only in the provider's secure dashboard. Upon account deletion, all associated data is permanently removed from our systems.</p>
+  <h2 id="choices">7. Your Choices and Rights</h2>
+  <p><strong>End Users</strong> can delete their consultation information right after submitting it using the "Delete my data" link in the widget, or by emailing us at <a href="mailto:hello@meetgoldie.com">hello@meetgoldie.com</a> with the Provider's name and the email address used. Information already delivered to the Provider must also be deleted by the Provider; please contact them directly.</p>
+  <p><strong>Providers</strong> can view and update account information in the dashboard, delete individual leads, and delete their account at any time.</p>
+  <p>Depending on where you live (including California, Washington, and other states with consumer privacy or health-data laws), you may have the right to access, correct, delete, or obtain a copy of your personal information, to withdraw consent, and to appeal a decision about your request. To make a request, email <a href="mailto:hello@meetgoldie.com">hello@meetgoldie.com</a>. We will verify your request and respond within the time required by law, and we will not discriminate against you for exercising your rights. Where we process information on a Provider's behalf, we may refer your request to that Provider.</p>
+  <p><strong>Cookies:</strong> you can accept or decline analytics cookies at any time using the Cookie Preferences link in our footer. We honor Global Privacy Control signals. See our <a href="/cookies">Cookie Policy</a>.</p>
 
-    <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin:1.5rem 0 .5rem">7. Contact</h3>
-    <p style="font-size:14px;color:#444;line-height:1.75;margin-bottom:.75rem">For privacy-related questions, contact us at <a href="mailto:hello@meetgoldie.com" style="color:#7c5ca8">hello@meetgoldie.com</a>.</p>
+  <h2 id="security">8. Security</h2>
+  <p>We protect information with encryption in transit (HTTPS), hashed passwords, access controls, rate limiting, and security headers, and we limit what is sent by email and text message. No method of transmission or storage is completely secure, but we work to protect your information and will notify affected users of a breach as required by law.</p>
 
-    <p style="font-size:13px;color:#6b6b6b;margin-top:2rem">Last updated: September 2026</p>
-  </div>
-</div>
+  <h2 id="hipaa">9. HIPAA</h2>
+  <p>Meet Goldie is not a HIPAA covered entity. Providers represent to us that they do not use the Service in connection with services billed to health insurance or government health programs, so Meet Goldie does not act as a HIPAA business associate. The consultation widget is not a medical records system. See Section 8 of our <a href="/terms">Terms of Service</a>.</p>
+
+  <h2 id="children">10. Children</h2>
+  <p>The Service is intended for adults 18 and older. We do not knowingly collect information from children under 18. If you believe a child has submitted information, contact us and we will delete it.</p>
+
+  <h2 id="changes">11. Changes to This Policy</h2>
+  <p>We may update this policy from time to time. We will post the updated version here with a new "Last updated" date and, for material changes, notify Providers by email or in the dashboard.</p>
+
+  <h2 id="contact">12. Contact Us</h2>
+  <p>Questions or requests about privacy: <a href="mailto:hello@meetgoldie.com">hello@meetgoldie.com</a><br>Meet Goldie, LLC</p>
+
+</main>
 
 <footer>
   <a href="/">Home</a>
@@ -84,7 +105,7 @@ footer a:hover{color:#fff}
   <a href="/terms">Terms of Service</a>
   <a href="/cookies">Cookie Policy</a>
   <a href="/accessibility">Accessibility</a>
-  <div style="margin-top:.75rem">© 2026 Meet Goldie. All rights reserved. · <a href="#" class="termly-display-preferences" style="color:rgba(255,255,255,.65);text-decoration:none">Consent Preferences</a></div>
+  <a href="#" onclick="openCookiePreferences(event)">Cookie Preferences</a>
 </footer>
 
 </body>
