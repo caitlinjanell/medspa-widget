@@ -27,6 +27,9 @@ h1{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
 .login-link{text-align:center;margin-top:1.25rem;font-size:13px;color:var(--t2)}
 .login-link a{color:var(--ac-m);font-weight:600;text-decoration:none}
 </style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SGQE8EDK4Q"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-SGQE8EDK4Q');</script>
 </head>
 <body>
 <div class="card">
@@ -39,6 +42,14 @@ h1{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
     <div class="err" id="err"></div>
     <label class="flbl">Clinic name</label>
     <input class="finp" id="clinic" placeholder="Lumière Aesthetics" autocomplete="organization">
+    <label class="flbl">Your last name</label>
+    <input class="finp" id="lname" placeholder="Doe" autocomplete="family-name">
+    <label class="flbl" style="display:flex;align-items:center;gap:6px;justify-content:space-between">
+      NPI number
+      <a href="https://npiregistry.cms.hhs.gov/search" target="_blank" rel="noopener" style="font-size:11px;color:var(--ac-m);font-weight:500;text-decoration:none">Look up your NPI →</a>
+    </label>
+    <input class="finp" id="npi" placeholder="10-digit NPI" maxlength="10" inputmode="numeric" pattern="[0-9]{10}">
+    <div id="npi-status" style="font-size:12px;margin:-8px 0 12px;display:none"></div>
     <label class="flbl">Your email</label>
     <input class="finp" id="email" type="email" placeholder="you@yourclinic.com" autocomplete="email">
     <label class="flbl">Password</label>
@@ -49,20 +60,62 @@ h1{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
   </div>
 </div>
 <script>
+// Live NPI lookup as user finishes typing
+let npiTimer;
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('npi').addEventListener('input', function() {
+    clearTimeout(npiTimer);
+    const status = document.getElementById('npi-status');
+    status.style.display = 'none';
+    if (this.value.length === 10) {
+      npiTimer = setTimeout(() => previewNPI(this.value), 600);
+    }
+  });
+});
+
+async function previewNPI(npi) {
+  const status = document.getElementById('npi-status');
+  status.style.display = 'block';
+  status.style.color = '#888';
+  status.textContent = 'Verifying NPI…';
+  try {
+    const res = await fetch(`https://npiregistry.cms.hhs.gov/api/?version=2.1&number=${npi}`);
+    const data = await res.json();
+    if (!data.result_count || data.result_count === 0) {
+      status.style.color = '#c0392b'; status.textContent = 'NPI not found — please double-check.'; return;
+    }
+    const r = data.results[0];
+    if (r.basic?.status !== 'A') {
+      status.style.color = '#c0392b'; status.textContent = 'This NPI is not active.'; return;
+    }
+    const name = r.enumeration_type === 'NPI-1'
+      ? `${r.basic.first_name} ${r.basic.last_name}${r.basic.credential ? ', ' + r.basic.credential : ''}`
+      : r.basic.organization_name;
+    const taxonomy = r.taxonomies?.[0]?.desc || '';
+    status.style.color = '#1a7a4a';
+    status.textContent = `✓ Found: ${name}${taxonomy ? ' · ' + taxonomy : ''}`;
+  } catch {
+    status.style.color = '#888'; status.textContent = 'Could not verify now — will check on submit.';
+  }
+}
+
 async function signup() {
   const clinic = document.getElementById('clinic').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const npi = document.getElementById('npi').value.trim();
   const email = document.getElementById('email').value.trim();
   const pw = document.getElementById('pw').value;
   const err = document.getElementById('err');
   const btn = document.getElementById('btn');
   err.style.display = 'none';
-  if (!clinic || !email || !pw) { err.textContent = 'Please fill in all fields.'; err.style.display = 'block'; return; }
-  btn.disabled = true; btn.textContent = 'Creating account…';
+  if (!clinic || !lname || !npi || !email || !pw) { err.textContent = 'Please fill in all fields.'; err.style.display = 'block'; return; }
+  if (!/^\d{10}$/.test(npi)) { err.textContent = 'NPI must be exactly 10 digits.'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Verifying NPI…';
   try {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clinicName: clinic, email, password: pw }),
+      body: JSON.stringify({ clinicName: clinic, lastName: lname, npi, email, password: pw }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Signup failed');

@@ -546,10 +546,11 @@ async function deleteMyData() {
   }
   btn.disabled = true; btn.textContent = 'Deleting…';
   try {
-    await fetch(`/api/leads/${S.leadId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/leads/${S.leadId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Delete failed');
     S.leadId = null;
     btn.style.display = 'none';
-    status.textContent = '✓ Your data has been deleted. The practice has not received your information.';
+    status.textContent = '✓ Your data has been deleted from our system. If the practice was already notified, contact them directly to remove your information from their records.';
     status.style.color = '#1a7a4a';
     status.style.display = 'block';
   } catch {

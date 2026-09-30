@@ -1005,7 +1005,6 @@ async function cancelSubscription() {
   const res = await api('POST', '/api/provider/cancel-subscription');
   if (res?.ok) {
     toast('Subscription cancelled. Access continues until end of billing period.');
-    provider.subscriptionStatus = 'canceled';
     showTab('billing');
   } else {
     toast(res?.error || 'Could not cancel subscription');

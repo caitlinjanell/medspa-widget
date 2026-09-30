@@ -20,9 +20,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 
 app.use(cors());
 
-app.get('/api/test-email/:to', async (req, res) => {
-  const pw = process.env.ADMIN_PASSWORD || 'admin123';
-  if (req.query.password !== pw) return res.status(401).json({ error: 'Unauthorized' });
+app.get('/api/test-email/:to', requireAuth, async (req, res) => {
   try {
     await sendEmail({ to: req.params.to, subject: 'Meet Goldie — email test', html: '<p style="font-family:sans-serif">Your email notifications are working correctly.</p>' });
     res.json({ ok: true, sent: req.params.to });
@@ -116,6 +114,53 @@ function requireAuth(req, res, next) {
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });
   }
+}
+
+// ── Plan limits ──
+function getPlanLimits(provider) {
+  const status = provider.subscription_status;
+  if (status === 'trialing') {
+    if (new Date(provider.trial_ends_at) > new Date()) {
+      return { active: true, maxWidgets: 5, maxMonthlyLeads: Infinity };
+    }
+    return { active: false, maxWidgets: 0, maxMonthlyLeads: 0 };
+  }
+  if (status === 'active') {
+    return provider.plan === 'pro'
+      ? { active: true, maxWidgets: 5,  maxMonthlyLeads: Infinity }
+      : { active: true, maxWidgets: 1,  maxMonthlyLeads: 200 };
+  }
+  return { active: false, maxWidgets: 0, maxMonthlyLeads: 0 };
+}
+
+// ── NPI verification ──
+async function verifyNPI(npiNumber, lastName) {
+  let data;
+  try {
+    const res = await fetch(
+      `https://npiregistry.cms.hhs.gov/api/?version=2.1&number=${encodeURIComponent(npiNumber.trim())}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    data = await res.json();
+  } catch {
+    throw new Error('Could not reach the NPI registry. Please try again in a moment.');
+  }
+  if (!data.result_count || data.result_count === 0) {
+    throw new Error('NPI number not found. Please double-check your NPI at npiregistry.cms.hhs.gov.');
+  }
+  const record = data.results[0];
+  if (record.basic?.status !== 'A') {
+    throw new Error('This NPI is deactivated. Please verify your NPI status at nppes.cms.hhs.gov.');
+  }
+  // Individual provider (NPI-1) — match last name
+  if (record.enumeration_type === 'NPI-1' && lastName) {
+    const registryLast = (record.basic?.last_name || '').toLowerCase().trim();
+    const enteredLast = lastName.toLowerCase().trim();
+    if (registryLast && enteredLast && registryLast !== enteredLast) {
+      throw new Error('Last name does not match NPI records. Please verify your information.');
+    }
+  }
+  return record;
 }
 
 // ── Email helper ──
@@ -256,12 +301,17 @@ app.use(express.static(path.join(__dirname, '../public')));
 // ══════════════════════════════════════
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, clinicName } = req.body;
-    if (!email || !password || !clinicName) return res.status(400).json({ error: 'All fields required' });
+    const { email, password, clinicName, npi, lastName } = req.body;
+    if (!email || !password || !clinicName || !npi) return res.status(400).json({ error: 'All fields required' });
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    try {
+      await verifyNPI(npi, lastName);
+    } catch (npiErr) {
+      return res.status(400).json({ error: npiErr.message });
+    }
     if (await db.getProviderByEmail(email)) return res.status(409).json({ error: 'An account with this email already exists' });
     const hash = await bcrypt.hash(password, 12);
-    const provider = await db.createProvider(email, hash, clinicName);
+    const provider = await db.createProvider(email, hash, clinicName, npi.trim());
     const token = jwt.sign({ id: provider.id, email: provider.email }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, provider: { id: provider.id, email: provider.email, clinicName: provider.clinicName } });
   } catch (err) {
@@ -308,34 +358,46 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 //  Stripe — checkout & billing portal
 // ══════════════════════════════════════
 app.post('/api/stripe/checkout', requireAuth, async (req, res) => {
-  if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
-  const { plan } = req.body; // 'starter' or 'pro'
-  const priceId = plan === 'pro' ? process.env.STRIPE_PRICE_PRO : process.env.STRIPE_PRICE_STARTER;
-  if (!priceId) return res.status(400).json({ error: `STRIPE_PRICE_${plan.toUpperCase()} not set in environment` });
+  try {
+    if (!stripe) return res.status(400).json({ error: 'Stripe not configured' });
+    const { plan } = req.body;
+    const priceId = plan === 'pro' ? process.env.STRIPE_PRICE_PRO : process.env.STRIPE_PRICE_STARTER;
+    if (!priceId) return res.status(400).json({ error: `STRIPE_PRICE_${plan.toUpperCase()} not set in Railway Variables` });
 
-  const provider = await db.getProviderById(req.provider.id);
-  const origin = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
+    const provider = await db.getProviderById(req.provider.id);
+    const origin = `https://${req.headers.host}`;
 
-  // Reuse existing Stripe customer if available
-  let customerId = provider.stripe_customer_id;
-  if (!customerId) {
-    const customer = await stripe.customers.create({ email: provider.email, name: provider.clinic_name });
-    customerId = customer.id;
-    db.updateProviderBilling(provider.id, { stripeCustomerId: customerId });
+    let customerId = provider.stripe_customer_id;
+    if (customerId) {
+      // Verify the customer still exists in Stripe (test↔live mode switches can orphan IDs)
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch {
+        customerId = null;
+      }
+    }
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email: provider.email, name: provider.clinic_name });
+      customerId = customer.id;
+      await db.updateProviderBilling(provider.id, { stripeCustomerId: customerId });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/dashboard?upgraded=1`,
+      cancel_url:  `${origin}/dashboard?canceled=1`,
+      metadata: { providerId: provider.id },
+      subscription_data: { trial_period_days: 14 },
+      allow_promotion_codes: true,
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe checkout error:', err.message);
+    res.status(500).json({ error: err.message });
   }
-
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/dashboard?upgraded=1`,
-    cancel_url:  `${origin}/dashboard?canceled=1`,
-    metadata: { providerId: provider.id },
-    subscription_data: { trial_period_days: 14 },
-    allow_promotion_codes: true,
-  });
-
-  res.json({ url: session.url });
 });
 
 app.post('/api/stripe/portal', requireAuth, async (req, res) => {
@@ -359,6 +421,31 @@ app.put('/api/provider/me', requireAuth, async (req, res) => {
   res.json({ id: provider.id, email: provider.email, clinicName: provider.clinic_name });
 });
 
+app.post('/api/provider/cancel-subscription', requireAuth, async (req, res) => {
+  try {
+    const provider = await db.getProviderById(req.provider.id);
+    if (!stripe || !provider.stripe_subscription_id) return res.status(400).json({ error: 'No active subscription found' });
+    // Status stays active until period end; the customer.subscription.deleted webhook marks it canceled
+    await stripe.subscriptions.update(provider.stripe_subscription_id, { cancel_at_period_end: true });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/provider/me', requireAuth, async (req, res) => {
+  try {
+    const provider = await db.getProviderById(req.provider.id);
+    if (stripe && provider.stripe_subscription_id) {
+      await stripe.subscriptions.cancel(provider.stripe_subscription_id).catch(e => console.warn('Stripe cancel error:', e.message));
+    }
+    await db.deleteProvider(req.provider.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 //  Provider — widgets
 // ══════════════════════════════════════
 app.get('/api/provider/widgets', requireAuth, async (req, res) => {
@@ -367,6 +454,16 @@ app.get('/api/provider/widgets', requireAuth, async (req, res) => {
 
 app.post('/api/provider/widgets', requireAuth, async (req, res) => {
   const provider = await db.getProviderById(req.provider.id);
+  const limits = getPlanLimits(provider);
+  if (!limits.active) return res.status(403).json({ error: 'Your subscription is not active. Please upgrade to create widgets.' });
+  const existing = await db.getWidgetsByProvider(req.provider.id);
+  if (existing.length >= limits.maxWidgets) {
+    return res.status(403).json({
+      error: limits.maxWidgets === 1
+        ? 'Your Starter plan includes 1 widget location. Upgrade to Pro for up to 5.'
+        : `Your plan allows up to ${limits.maxWidgets} widgets.`,
+    });
+  }
   const widget = await db.createWidget(req.provider.id, provider.clinic_name, req.body.name);
   res.json(widget);
 });
@@ -391,11 +488,25 @@ app.get('/api/provider/leads', requireAuth, async (req, res) => {
 });
 
 // ══════════════════════════════════════
+// Public — end-user data deletion (lead ID is the token)
+app.delete('/api/leads/:id', async (req, res) => {
+  try {
+    await db.deleteLeadById(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 //  Public — widget config (loaded by widget JS)
 // ══════════════════════════════════════
 app.get('/api/widget-config/:code', async (req, res) => {
   const widget = await db.getWidgetByCode(req.params.code);
   if (!widget) return res.status(404).json({ error: 'Widget not found' });
+  const provider = await db.getProviderById(widget.provider_id);
+  if (!provider || !getPlanLimits(provider).active) {
+    return res.status(403).json({ error: 'subscription_inactive' });
+  }
   res.json(widget.config);
 });
 
@@ -437,12 +548,24 @@ app.post('/api/leads', async (req, res) => {
       return res.json({ ok: true, demo: true });
     }
 
+    const provider = await db.getProviderById(providerId);
+    const limits = getPlanLimits(provider);
+    if (!limits.active) {
+      return res.status(403).json({ error: 'subscription_inactive' });
+    }
+    if (limits.maxMonthlyLeads !== Infinity) {
+      const count = await db.getMonthlyLeadCount(providerId);
+      if (count >= limits.maxMonthlyLeads) {
+        return res.status(429).json({ error: 'monthly_limit_reached' });
+      }
+    }
+
     const lead = await db.saveLead({ ...body, providerId, widgetCode: body.widgetCode, photos: body.photos || {} });
 
     // Route the lead (fire and forget)
     if (widget) routeLead(lead, widget).catch(err => console.warn('Routing error:', err.message));
 
-    res.json({ ok: true });
+    res.json({ ok: true, leadId: lead.id });
   } catch (err) {
     console.error('Lead save error:', err.message);
     res.status(500).json({ error: err.message });
