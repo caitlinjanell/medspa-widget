@@ -437,7 +437,7 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
 </section>
 
 <!-- Testimonials -->
-<section class="testi" id="testi-section">
+<section class="testi" id="testi-section" hidden>
   <div class="container">
     <div style="text-align:center">
       <div class="section-tag">Testimonials</div>
@@ -466,22 +466,17 @@ footer{background:#111;color:rgba(255,255,255,.55);padding:3rem 1.5rem}
     </div>`;
   }
 
-  const placeholders = [
-    { content: "We went from a 12% website conversion rate to over 30% in the first month. Clients come in already knowing exactly what they want — it's transformed our consultations.", author_name: "Dr. Sarah Kim", author_role: "Park Avenue Aesthetics, NYC" },
-    { content: "The AI recommendations are genuinely impressive. Our clients trust the analysis because it's personalized to their photos and goals — not a generic brochure.", author_name: "Lisa Torres, NP", author_role: "Radiance MedSpa, Miami" },
-    { content: "Setup took less than 10 minutes. Now we're capturing qualified leads at 2am when no one is in the office. It paid for itself in the first week.", author_name: "Dr. Michael Chen", author_role: "The Aesthetic Studio, LA" },
-  ];
-
+  // Only real, admin-approved testimonials are shown; the section stays hidden until there is one.
+  const section = document.getElementById('testi-section');
   try {
     const res = await fetch('/api/testimonials');
     const data = await res.json();
-    const list = Array.isArray(data) && data.length >= 1 ? data : placeholders;
-    document.getElementById('testi-grid').innerHTML = list.slice(0, 6).map(t =>
-      card(t.content, t.author_name, (t.author_role ? t.author_role + ' · ' : '') + (t.clinic_name || t.author_role || ''))
+    if (!Array.isArray(data) || !data.length) return;
+    document.getElementById('testi-grid').innerHTML = data.slice(0, 6).map(t =>
+      card(t.content, t.author_name, (t.author_role ? t.author_role + ' · ' : '') + (t.clinic_name || ''))
     ).join('');
-  } catch {
-    document.getElementById('testi-grid').innerHTML = placeholders.map(t => card(t.content, t.author_name, t.author_role)).join('');
-  }
+    section.hidden = false;
+  } catch {}
 })();
 </script>
 
